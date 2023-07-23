@@ -11,9 +11,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(Exception.class) // 异常处理器
     public Result fail(Exception e) {
         e.printStackTrace();
+        return Result.fail(null);
+    }
+
+    // 自定义异常处理类
+    @ExceptionHandler(SsyxException.class)
+    public Result fail2(Exception e) {
         return Result.fail(null);
     }
 }
