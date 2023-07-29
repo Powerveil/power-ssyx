@@ -1,5 +1,8 @@
 package com.power.ssyx.acl.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.RoleMapper;
 import com.power.ssyx.acl.service.RoleService;
@@ -7,6 +10,10 @@ import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -17,8 +24,66 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     public Result pageList(Integer current, Integer limit, RoleQueryVo roleQueryVo) {
         //1.创建page对象，传递当前页和每页记录数
-
+        // current：当前页
+        // limit：每页显示记录数
+        Page<Role> pageParam = new Page<>(current, limit);
         //2.调用service方法实现条件分页查询，返回分页对象
-        return null;
+        IPage<Role> pageModel = this.selectRolePage(pageParam, roleQueryVo);
+        return Result.ok(pageModel);
+    }
+
+    @Override
+    public IPage<Role> selectRolePage(Page<Role> pageParam, RoleQueryVo roleQueryVo) {
+        // 获取条件值
+        String roleName = roleQueryVo.getRoleName();
+
+        // 判断吗条件值是否为空，不为空封装查询条件
+        LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(roleName)) {
+            queryWrapper.like(Role::getRoleName, roleName);
+        }
+        // 调用方法实现条件分页查询
+        IPage<Role> page = baseMapper.selectPage(pageParam, queryWrapper);
+        // 返回分页对象
+        return page;
+    }
+
+    @Override
+    public Result get(Integer id) {
+        Role role = this.getById(id);
+        return Result.ok(role);
+    }
+
+    @Override
+    public Result saveRole(Role role) {
+        if (this.save(role)) {
+            return Result.ok(null);
+        }
+        return Result.fail("添加角色失败");
+    }
+
+    @Override
+    public Result updateRoleById(Role role) {
+        if (this.updateById(role)) {
+            return Result.ok(null);
+        }
+        return Result.fail("更新角色失败");
+    }
+
+    @Override
+    public Result deleteRoleById(Integer id) {
+        if (this.removeById(id)) {
+            return Result.ok(null);
+        }
+        return Result.fail("删除角色失败");
+    }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public Result deleteRoleByIds(List<Long> ids) {
+        if (this.removeByIds(ids)) {
+            return Result.ok(null);
+        }
+        return Result.fail("批量删除角色失败");
     }
 }

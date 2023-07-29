@@ -2,11 +2,14 @@ package com.power.ssyx.acl.controller;
 
 import com.power.ssyx.acl.service.RoleService;
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -30,14 +33,41 @@ public class RoleController {
                            RoleQueryVo roleQueryVo) {
         return roleService.pageList(current, limit, roleQueryVo);
     }
+
     //2.根据id查询角色
+    @ApiOperation("根据id查询角色")
+    @GetMapping("/get/{id}")
+    public Result get(@PathVariable(name = "id") Integer id) {
+        return roleService.get(id);
+    }
 
     //3.添加角色
+    @ApiOperation("添加角色")
+    @PostMapping("/save")
+    public Result saveRole(@RequestBody Role role) {
+        return roleService.saveRole(role);
+    }
 
     //4.修改角色
+    @ApiOperation("修改角色")
+    @PutMapping("/update")
+    public Result updateRoleById(@RequestBody Role role) {
+        return roleService.updateRoleById(role);
+    }
 
     //5.根据id删除角色
+    @ApiOperation("根据id删除角色")
+    @DeleteMapping("/remove/{id}")
+    public Result deleteRoleById(@PathVariable(name = "id") Integer id) {
+        return roleService.deleteRoleById(id);
+    }
 
     //6.批量删除角色
+    @ApiOperation("批量删除角色")
+    @DeleteMapping("/batchRemove")
+    public Result deleteRoleByIds(@RequestBody List<Long> ids) {
+        return roleService.deleteRoleByIds(ids);
+    }
+
 
 }
