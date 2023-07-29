@@ -37,7 +37,12 @@ public enum ResultCodeEnum {
     SKU_LIMIT_ERROR(230, "购买个数不能大于限购个数"),
     REGION_OPEN(240, "该区域已开通"),
     REGION_NO_OPEN(240, "该区域未开通"),
-    ;
+
+    ROLE_NAME_IS_BLANK(270, "角色名称不嫩为空"),
+    ROLE_IS_EXIST(271, "角色名称不嫩为空"),
+    USERNAME_IS_BLANK(275, "用户名不嫩为空"),
+    ADMIN_IS_EXIST(276, "用户名已存在，不能使用该用户名"),
+    ID_IS_NULL(277, "Id不能为空");
 
     private Integer code;
 

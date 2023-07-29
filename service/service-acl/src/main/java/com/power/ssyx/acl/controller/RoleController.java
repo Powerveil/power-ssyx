@@ -45,14 +45,14 @@ public class RoleController {
     @ApiOperation("添加角色")
     @PostMapping("/save")
     public Result saveRole(@RequestBody Role role) {
-        return roleService.saveRole(role);
+        return roleService.saveRole(role); // TODO 使用DTO id什么的不能传进来
     }
 
     //4.修改角色
     @ApiOperation("修改角色")
     @PutMapping("/update")
     public Result updateRoleById(@RequestBody Role role) {
-        return roleService.updateRoleById(role);
+        return roleService.updateRoleById(role); // TODO 使用DTO id什么的不能传进来
     }
 
     //5.根据id删除角色

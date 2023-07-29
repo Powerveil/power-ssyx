@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.RoleMapper;
 import com.power.ssyx.acl.service.RoleService;
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Powerveil
@@ -41,8 +43,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(roleName)) {
             queryWrapper.like(Role::getRoleName, roleName);
-            queryWrapper.orderByAsc(Role::getCreateTime);
         }
+        queryWrapper.orderByAsc(Role::getCreateTime);
         // 调用方法实现条件分页查询
         IPage<Role> page = baseMapper.selectPage(pageParam, queryWrapper);
         // 返回分页对象
@@ -57,7 +59,26 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public Result saveRole(Role role) {
+        // TODO 一定要使用DTO接受数据！！！
+        role.setId(null);// 不能这样做
+        // 权限名需要存在
+        String roleName = role.getRoleName();
+        if (!StringUtils.hasText(roleName)) {
+            return Result.build(null, ResultCodeEnum.ROLE_NAME_IS_BLANK);
+        }
+        // 数据库不能有相同的权限名
+        LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Role::getRoleName, roleName);
+        if (count(queryWrapper) > 0) {
+            return Result.build(null, ResultCodeEnum.ROLE_IS_EXIST);
+        }
+//        System.out.print(role.getId() + "：");
+//        System.out.println(role);
         if (this.save(role)) {
+//            System.out.print(role.getId() + "：");
+//            System.out.println(role);
+//            System.out.println(role.getCreateTime());
+//            System.out.println(role.getUpdateTime());
             return Result.ok(null);
         }
         return Result.fail("添加角色失败");
@@ -65,6 +86,21 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public Result updateRoleById(Role role) {
+        // Id不能为空
+        if (Objects.isNull(role.getId())) {
+            return Result.build(null, ResultCodeEnum.ID_IS_NULL);
+        }
+        // 权限名需要存在
+        String roleName = role.getRoleName();
+        if (!StringUtils.hasText(roleName)) {
+            return Result.build(null, ResultCodeEnum.ROLE_NAME_IS_BLANK);
+        }
+        // 数据库不能有相同的权限名
+        LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Role::getRoleName, roleName);
+        if (count(queryWrapper) > 0) {
+            return Result.build(null, ResultCodeEnum.ROLE_IS_EXIST);
+        }
         if (this.updateById(role)) {
             return Result.ok(null);
         }

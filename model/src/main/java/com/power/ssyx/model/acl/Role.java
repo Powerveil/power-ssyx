@@ -32,5 +32,6 @@ public class Role extends BaseEntity {
     @TableField("remark")
     private String remark;
 
+
 }
 
