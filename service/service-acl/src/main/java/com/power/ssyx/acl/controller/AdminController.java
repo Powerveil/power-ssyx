@@ -1,6 +1,7 @@
 package com.power.ssyx.acl.controller;
 
 import com.power.ssyx.acl.service.AdminService;
+import com.power.ssyx.acl.service.RoleService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.acl.Admin;
 import com.power.ssyx.vo.acl.AdminQueryVo;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Powerveil
@@ -23,6 +25,9 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private RoleService roleService;
 
     // 1.用户列表（条件分页查询）
     @ApiOperation("用户列表")
@@ -66,6 +71,25 @@ public class AdminController {
     @DeleteMapping("/batchRemove")
     public Result deleteAdminByIds(@RequestBody List<Long> ids) {
         return adminService.deleteAdminByIds(ids);
+    }
+
+
+    //获取某个用户的所有角色，和根据用户id查询分配角色列表
+    @GetMapping("/toAssign/{adminId}")
+    @ApiOperation("获取某个用户的所有角色")
+    public Result toAssign(@PathVariable("adminId") Integer adminId) {
+        // 返回map集合包含两部分数据：所有角色和为用户分配角色列表
+        Map<String, Object> map = roleService.getRoleByAdminId(adminId);
+        return Result.ok(map);
+    }
+
+
+    // 为用户进行角色分配
+    @ApiOperation("为用户进行角色分配")
+    @PostMapping("/doAssign")
+    public Result doAssign(@RequestParam("adminId") Long adminId,
+                           @RequestParam("roleId") Long[] roleId) {
+        return roleService.saveAdminRole(adminId, roleId);
     }
 
 

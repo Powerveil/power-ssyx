@@ -8,6 +8,7 @@ import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Powerveil
@@ -27,4 +28,9 @@ public interface RoleService extends IService<Role> {
     Result deleteRoleById(Integer id);
 
     Result deleteRoleByIds(List<Long> ids);
+
+    Map<String, Object> getRoleByAdminId(Integer adminId);
+
+    //为用户进行角色分配
+    Result saveAdminRole(Long adminId, Long[] roleId);
 }

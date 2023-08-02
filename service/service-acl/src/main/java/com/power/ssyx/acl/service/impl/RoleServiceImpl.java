@@ -5,17 +5,20 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.RoleMapper;
+import com.power.ssyx.acl.service.AdminRoleService;
 import com.power.ssyx.acl.service.RoleService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.model.acl.AdminRole;
 import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Powerveil
@@ -23,6 +26,11 @@ import java.util.Objects;
  */
 @Service
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
+
+
+    @Autowired
+    private AdminRoleService adminRoleService;
+
     @Override
     public Result pageList(Integer current, Integer limit, RoleQueryVo roleQueryVo) {
         //1.创建page对象，传递当前页和每页记录数
@@ -122,5 +130,49 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             return Result.ok(null);
         }
         return Result.fail("批量删除角色失败");
+    }
+
+    @Override
+    public Map<String, Object> getRoleByAdminId(Integer adminId) {
+
+        List<Role> allRolesList = list();
+
+        LambdaQueryWrapper<AdminRole> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AdminRole::getAdminId, adminId);
+
+        List<Long> roleIds = adminRoleService.list(queryWrapper).stream().map(AdminRole::getRoleId).collect(Collectors.toList());
+
+
+        List<Role> assignRoleList = new ArrayList<>();
+        for (Role role : allRolesList) {
+            if (roleIds.contains(role.getId())) {
+                assignRoleList.add(role);
+            }
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("allRolesList", allRolesList);
+        map.put("assignRoles", assignRoleList);
+        return map;
+    }
+
+    @Transactional(rollbackFor = {Exception.class})
+    @Override
+    public Result saveAdminRole(Long adminId, Long[] roleId) {
+        LambdaQueryWrapper<AdminRole> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AdminRole::getAdminId, adminId);
+        adminRoleService.remove(queryWrapper);
+
+        List<AdminRole> list = new ArrayList<>();
+
+        for (int i = 0; i < roleId.length; i++) {
+            AdminRole adminRole = new AdminRole();
+            adminRole.setAdminId(adminId);
+            adminRole.setRoleId(roleId[i]);
+            list.add(adminRole);
+        }
+        adminRoleService.saveBatch(list);
+
+        return Result.ok(null);
     }
 }
