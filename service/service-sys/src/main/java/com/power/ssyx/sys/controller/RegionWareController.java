@@ -1,0 +1,55 @@
+package com.power.ssyx.sys.controller;
+
+import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.sys.RegionWare;
+import com.power.ssyx.sys.service.RegionWareService;
+import com.power.ssyx.vo.sys.RegionWareQueryVo;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * @author Powerveil
+ * @Date 2023/8/3 20:58
+ */
+@RestController
+@CrossOrigin
+@Api(tags = "区域仓库接口")
+@RequestMapping("/admin/sys/regionWare")
+public class RegionWareController {
+
+    @Autowired(required = true)
+    private RegionWareService regionWareService;
+
+
+    @ApiOperation("开通区域列表")
+    @GetMapping("/{page}/{limit}")
+    public Result getPageList(@PathVariable("page") Integer page,
+                              @PathVariable("limit") Integer limit,
+                              RegionWareQueryVo regionWareQueryVo) {
+        return regionWareService.getPageList(page, limit, regionWareQueryVo);
+    }
+
+
+    @ApiOperation("添加开通区域")
+    @PostMapping("/save")
+    public Result saveRegionWare(@RequestBody RegionWare regionWare) {
+        return regionWareService.saveRegionWare(regionWare);
+    }
+
+    // 删除开通区域 removeById
+    @ApiOperation("删除开通区域")
+    @DeleteMapping("/remove/{id}")
+    public Result removeRegionWareById(@PathVariable("id") Long id) {
+        return regionWareService.removeRegionWareById(id);
+    }
+
+    // 取消开通区域 updateStatus
+    @ApiOperation("取消开通区域")
+    @DeleteMapping("/updateStatus/{id}/{status}")
+    public Result updateStatus(@PathVariable("id") Long id,
+                               @PathVariable("status") Integer status) {
+        return regionWareService.updateStatus(id, status);
+    }
+}

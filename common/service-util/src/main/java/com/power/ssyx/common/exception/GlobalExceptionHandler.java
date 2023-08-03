@@ -19,7 +19,11 @@ public class GlobalExceptionHandler {
 
     // 自定义异常处理类
     @ExceptionHandler(SsyxException.class)
-    public Result fail2(Exception e) {
+    public Result error(Exception e) {
+        if (e instanceof SsyxException) {
+            SsyxException ex = (SsyxException) e;
+            return Result.build(null, ex.getCode(), ex.getMessage());
+        }
         return Result.fail(null);
     }
 }
