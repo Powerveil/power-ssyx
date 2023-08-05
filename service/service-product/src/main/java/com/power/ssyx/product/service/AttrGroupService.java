@@ -1,7 +1,11 @@
 package com.power.ssyx.product.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.product.AttrGroup;
+import com.power.ssyx.vo.product.AttrGroupQueryVo;
+
+import java.util.List;
 
 /**
  * @author power
@@ -9,5 +13,19 @@ import com.power.ssyx.model.product.AttrGroup;
  * @createDate 2023-08-05 15:19:29
  */
 public interface AttrGroupService extends IService<AttrGroup> {
+
+    Result getPageList(Integer page, Integer limit, AttrGroupQueryVo attrGroupQueryVo);
+
+    Result get(Integer id);
+
+    Result saveAttrGroup(AttrGroup category);
+
+    Result updateAttrGroupById(AttrGroup category);
+
+    Result deleteAttrGroupById(Integer id);
+
+    Result deleteAttrGroupByIds(List<Long> ids);
+
+    Result findAllList();
 
 }

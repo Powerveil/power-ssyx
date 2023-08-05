@@ -106,7 +106,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         // 数据库不能有相同的权限名
         LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Role::getRoleName, roleName);
-        if (count(queryWrapper) > 0) {
+        Role one = getOne(queryWrapper);
+        if (!one.getId().equals(role.getId())) {
             return Result.build(null, ResultCodeEnum.ROLE_IS_EXIST);
         }
         if (this.updateById(role)) {

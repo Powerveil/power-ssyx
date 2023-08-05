@@ -46,7 +46,9 @@ public enum ResultCodeEnum {
 
 
     CATEGORY_NAME_IS_BLANK(285, "商品分类名称不嫩为空"),
-    CATEGORY_IS_EXIST(286, "商品分类名称已存在，不能使用该商品分类名称");
+    CATEGORY_IS_EXIST(286, "商品分类名称已存在，不能使用该商品分类名称"),
+    ATTR_GROUP_NAME_IS_BLANK(290, "属性分组名称不嫩为空"),
+    ATTR_GROUP_IS_EXIST(291, "属性分组名称已存在，不能使用该属性分组名称");
 
     private Integer code;
 

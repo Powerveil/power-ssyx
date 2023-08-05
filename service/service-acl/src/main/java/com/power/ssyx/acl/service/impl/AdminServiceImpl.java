@@ -106,7 +106,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         LambdaQueryWrapper<Admin> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Admin::getUsername, username);
         // 用户名不能相同
-        if (count(queryWrapper) > 0) {
+        Admin one = getOne(queryWrapper);
+        if (!one.getId().equals(admin.getId())) {
             return Result.build(null, ResultCodeEnum.ADMIN_IS_EXIST);
         }
 

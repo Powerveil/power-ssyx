@@ -81,7 +81,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         // 数据库不能有相同的商品分类名
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, categoryName);
-        if (count(queryWrapper) > 0) {
+        Category one = getOne(queryWrapper);
+        if (!one.getId().equals(category.getId())) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
         if (this.updateById(category)) {
