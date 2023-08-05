@@ -47,7 +47,7 @@ public class RegionWareController {
 
     // 取消开通区域 updateStatus
     @ApiOperation("取消开通区域")
-    @DeleteMapping("/updateStatus/{id}/{status}")
+    @PostMapping("/updateStatus/{id}/{status}")
     public Result updateStatus(@PathVariable("id") Long id,
                                @PathVariable("status") Integer status) {
         return regionWareService.updateStatus(id, status);
