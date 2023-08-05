@@ -39,10 +39,14 @@ public enum ResultCodeEnum {
     REGION_NO_OPEN(240, "该区域未开通"),
 
     ROLE_NAME_IS_BLANK(270, "角色名称不嫩为空"),
-    ROLE_IS_EXIST(271, "角色名称不嫩为空"),
+    ROLE_IS_EXIST(271, "角色名称已存在，不能使用该角色名称"),
     USERNAME_IS_BLANK(275, "用户名不嫩为空"),
     ADMIN_IS_EXIST(276, "用户名已存在，不能使用该用户名"),
-    ID_IS_NULL(277, "Id不能为空");
+    ID_IS_NULL(277, "Id不能为空"),
+
+
+    CATEGORY_NAME_IS_BLANK(285, "商品分类名称不嫩为空"),
+    CATEGORY_IS_EXIST(286, "商品分类名称已存在，不能使用该商品分类名称");
 
     private Integer code;
 
