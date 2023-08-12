@@ -2,4 +2,4 @@ spring:
   application:
     name: service-product
   profiles:
-    active: dev
+    active: prod

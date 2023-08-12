@@ -44,3 +44,5 @@ third-party/nacos/work/
 logs
 rebel.xml
 file/
+
+application-prod.yml
