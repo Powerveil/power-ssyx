@@ -81,7 +81,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttrGroup::getName, attrGroupName);
         AttrGroup one = getOne(queryWrapper);
-        if (!one.getId().equals(attrGroup.getId())) {
+        if (!Objects.isNull(one) && !one.getId().equals(attrGroup.getId())) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
         if (this.updateById(attrGroup)) {

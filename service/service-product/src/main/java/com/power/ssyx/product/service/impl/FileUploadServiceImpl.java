@@ -156,7 +156,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     /**
      * 最终生成一个年/月/日/文件名
-     * 例如2023/08/13
+     * 例如2023/8/13
      *
      * @param fileName 文件名
      * @return 最终在OSS的文件路径
@@ -181,6 +181,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     /**
      * 最终生成一个年/月/日/文件名
+     * 例如2023/08/13
      *
      * @param fileName 文件名
      * @return 最终在OSS的文件路径

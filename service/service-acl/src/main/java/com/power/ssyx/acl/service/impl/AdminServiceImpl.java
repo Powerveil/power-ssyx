@@ -107,7 +107,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         queryWrapper.eq(Admin::getUsername, username);
         // 用户名不能相同
         Admin one = getOne(queryWrapper);
-        if (!one.getId().equals(admin.getId())) {
+        if (!Objects.isNull(one) && !one.getId().equals(admin.getId())) {
             return Result.build(null, ResultCodeEnum.ADMIN_IS_EXIST);
         }
 

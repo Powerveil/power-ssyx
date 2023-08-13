@@ -1,7 +1,6 @@
 package com.power.ssyx.product.controller;
 
 import com.power.ssyx.common.result.Result;
-import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.product.service.SkuInfoService;
 import com.power.ssyx.vo.product.SkuInfoQueryVo;
 import com.power.ssyx.vo.product.SkuInfoVo;
@@ -37,7 +36,7 @@ public class SkuInfoController {
     //2.根据id查询sku信息
     @ApiOperation("根据id查询sku信息")
     @GetMapping("/get/{id}")
-    public Result get(@PathVariable(name = "id") Integer id) {
+    public Result get(@PathVariable(name = "id") Long id) {
         return skuInfoService.get(id);
     }
 
@@ -51,14 +50,14 @@ public class SkuInfoController {
     //4.修改sku信息
     @ApiOperation("修改sku信息")
     @PutMapping("/update")
-    public Result updateSkuInfoById(@RequestBody SkuInfo skuInfo) {
-        return skuInfoService.updateSkuInfoById(skuInfo); // TODO 使用DTO id什么的不能传进来
+    public Result updateSkuInfoById(@RequestBody SkuInfoVo skuInfoVo) {
+        return skuInfoService.updateSkuInfoById(skuInfoVo); // TODO 使用DTO id什么的不能传进来
     }
 
     //5.根据id删除sku信息
     @ApiOperation("根据id删除sku信息")
     @DeleteMapping("/remove/{id}")
-    public Result deleteSkuInfoById(@PathVariable(name = "id") Integer id) {
+    public Result deleteSkuInfoById(@PathVariable(name = "id") Long id) {
         return skuInfoService.deleteSkuInfoById(id);
     }
 

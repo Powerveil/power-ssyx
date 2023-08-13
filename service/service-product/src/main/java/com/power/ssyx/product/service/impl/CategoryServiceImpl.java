@@ -82,7 +82,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, categoryName);
         Category one = getOne(queryWrapper);
-        if (!one.getId().equals(category.getId())) {
+        if (!Objects.isNull(one) && !one.getId().equals(category.getId())) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
         if (this.updateById(category)) {

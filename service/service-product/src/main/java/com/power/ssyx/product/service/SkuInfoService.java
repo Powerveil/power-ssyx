@@ -15,15 +15,23 @@ import java.util.List;
  */
 public interface SkuInfoService extends IService<SkuInfo> {
 
+
     Result getPageList(Integer page, Integer limit, SkuInfoQueryVo skuInfoQueryVo);
 
-    Result get(Integer id);
+    Result get(Long id);
 
     Result saveSkuInfo(SkuInfoVo skuInfoVo);
 
-    Result updateSkuInfoById(SkuInfo skuInfo);
+    Result updateSkuInfoById(SkuInfoVo skuInfoVo);
 
-    Result deleteSkuInfoById(Integer id);
+    Result deleteSkuInfoById(Long id);
 
     Result deleteSkuInfoByIds(List<Long> ids);
+
+    boolean saveSkuOthers(SkuInfoVo skuInfoVo);
+
+    boolean deleteSkuOthersBySkuId(Long skuId);
+
+    boolean deleteSkuOthersBySkuIds(List<Long> skuIds);
+
 }

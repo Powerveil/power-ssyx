@@ -1,10 +1,13 @@
 package com.power.ssyx.product.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.model.product.SkuAttrValue;
 import com.power.ssyx.product.mapper.SkuAttrValueMapper;
 import com.power.ssyx.product.service.SkuAttrValueService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author power
@@ -15,6 +18,27 @@ import org.springframework.stereotype.Service;
 public class SkuAttrValueServiceImpl extends ServiceImpl<SkuAttrValueMapper, SkuAttrValue>
         implements SkuAttrValueService {
 
+    @Override
+    public List<SkuAttrValue> getAttrValueList(Long skuId) {
+        LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SkuAttrValue::getSkuId, skuId);
+        queryWrapper.orderByAsc(SkuAttrValue::getSort);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public boolean deleteBySkuId(Long skuId) {
+        LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SkuAttrValue::getSkuId, skuId);
+        return remove(queryWrapper);
+    }
+
+    @Override
+    public boolean deleteBySkuIds(List<Long> skuIds) {
+        LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SkuAttrValue::getSkuId, skuIds);
+        return remove(queryWrapper);
+    }
 }
 
 

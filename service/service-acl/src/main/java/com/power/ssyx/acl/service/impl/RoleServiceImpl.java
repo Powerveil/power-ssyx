@@ -107,7 +107,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Role::getRoleName, roleName);
         Role one = getOne(queryWrapper);
-        if (!one.getId().equals(role.getId())) {
+        if (!Objects.isNull(one) && !one.getId().equals(role.getId())) {
             return Result.build(null, ResultCodeEnum.ROLE_IS_EXIST);
         }
         if (this.updateById(role)) {
