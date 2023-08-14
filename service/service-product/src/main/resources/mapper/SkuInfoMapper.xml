@@ -41,4 +41,19 @@
         ware_id,version,create_time,
         update_time,is_deleted
     </sql>
+    <update id="check">
+        update sku_info
+        set check_status = #{status}
+        where id = #{id};
+    </update>
+    <update id="publish">
+        update sku_info
+        set publish_status = #{status}
+        where id = #{id};
+    </update>
+    <update id="isNewPerson">
+        update sku_info
+        set is_new_person = #{status}
+        where id = #{id};
+    </update>
 </mapper>

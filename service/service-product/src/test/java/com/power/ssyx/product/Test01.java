@@ -1,8 +1,13 @@
 package com.power.ssyx.product;
 
+import com.power.ssyx.ServiceProductApplication;
+import com.power.ssyx.product.mapper.SkuInfoMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -11,10 +16,14 @@ import java.util.UUID;
  * @author Powerveil
  * @Date 2023/8/13 0:16
  */
-@SpringBootTest
+@SpringBootTest(classes = {ServiceProductApplication.class})
 @Slf4j
-//@RunWith(value = {ServiceProductApplication.class})
+@RunWith(SpringRunner.class)
 public class Test01 {
+
+    @Autowired
+    private SkuInfoMapper skuInfoMapper;
+
     @Test
     public void test01() {
         log.info("你好世界");
@@ -39,5 +48,11 @@ public class Test01 {
 //        String filePath = "/" + year + "/" + month + "/" + day + "/" + fileName;
         String filePath = year + "/" + month + "/" + day + "/" + fileName;
         log.info("filePath={}", filePath);
+    }
+
+    @Test
+    public void test02() {
+        int check = skuInfoMapper.check(14L, 1);
+        log.info("更改是否成功:{}", check);
     }
 }

@@ -67,4 +67,26 @@ public class SkuInfoController {
     public Result deleteSkuInfoByIds(@RequestBody List<Long> ids) {
         return skuInfoService.deleteSkuInfoByIds(ids);
     }
+
+    @ApiOperation("商品审核")
+    @GetMapping("/check/{id}/{status}")
+    public Result check(@PathVariable(name = "id") Long id,
+                        @PathVariable(name = "status") Integer status) {
+        return skuInfoService.check(id, status);
+    }
+
+
+    @ApiOperation("商品上下架")
+    @GetMapping("/publish/{id}/{status}")
+    public Result publish(@PathVariable(name = "id") Long id,
+                          @PathVariable(name = "status") Integer status) {
+        return skuInfoService.publish(id, status);
+    }
+
+    @ApiOperation("新人专享")
+    @GetMapping("/isNewPerson/{id}/{status}")
+    public Result isNewPerson(@PathVariable(name = "id") Long id,
+                              @PathVariable(name = "status") Integer status) {
+        return skuInfoService.isNewPerson(id, status);
+    }
 }

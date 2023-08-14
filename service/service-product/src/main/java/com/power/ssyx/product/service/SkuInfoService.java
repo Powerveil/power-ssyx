@@ -34,4 +34,9 @@ public interface SkuInfoService extends IService<SkuInfo> {
 
     boolean deleteSkuOthersBySkuIds(List<Long> skuIds);
 
+    Result check(Long id, Integer status);
+
+    Result publish(Long id, Integer status);
+
+    Result isNewPerson(Long id, Integer status);
 }

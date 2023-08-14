@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.common.utils.BeanCopyUtils;
+import com.power.ssyx.contants.SystemConstants;
 import com.power.ssyx.model.product.SkuAttrValue;
 import com.power.ssyx.model.product.SkuImage;
 import com.power.ssyx.model.product.SkuInfo;
@@ -37,6 +38,8 @@ import java.util.Objects;
 @Service
 public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         implements SkuInfoService {
+    @Autowired
+    private SkuInfoMapper skuInfoMapper;
 
     @Autowired
     private SkuAttrValueService skuAttrValueService;
@@ -231,6 +234,38 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             return Boolean.TRUE;
         }));
         return true;
+    }
+
+    @Override
+    public Result check(Long id, Integer status) {
+        transactionTemplate.execute((status1) -> {
+            int ss = skuInfoMapper.check(id, status);
+            // 如果审核未通过 强制下架 每次调用保证数据库的数据是正确的
+            if (SystemConstants.CHECK_NOT_PASS.equals(status)) {
+                skuInfoMapper.publish(id, SystemConstants.PUBLISH_NOT_PASS);
+            }
+            return Boolean.TRUE;//TODO 所有transactionTemplate.execute内中的异常需要自行处理
+        });
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result publish(Long id, Integer status) {
+        SkuInfo skuInfo = getById(id);
+        if (SystemConstants.CHECK_NOT_PASS.equals(skuInfo.getCheckStatus())) return Result.fail("审核通过才能继续操作");
+        int ss = skuInfoMapper.publish(id, status);
+        if (SystemConstants.PUBLISH_PASS.equals(status)) { // 上架
+            // TODO 整合mq吧数据同步到es里面
+        } else { // 下架
+            // TODO 整合mq吧数据同步到es里面
+        }
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result isNewPerson(Long id, Integer status) {
+        int ss = skuInfoMapper.isNewPerson(id, status);
+        return Result.ok(null);
     }
 
     @Override

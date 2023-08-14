@@ -2,6 +2,8 @@ package com.power.ssyx.product.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.product.SkuInfo;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @author power
@@ -9,8 +11,14 @@ import com.power.ssyx.model.product.SkuInfo;
  * @createDate 2023-08-05 15:19:29
  * @Entity com.power.ssyx.product.domain.SkuInfo
  */
+@Mapper
 public interface SkuInfoMapper extends BaseMapper<SkuInfo> {
 
+    int check(@Param("id") Long id, @Param("status") Integer status);
+
+    int publish(@Param("id") Long id, @Param("status") Integer status);
+
+    int isNewPerson(@Param("id") Long id, @Param("status") Integer status);
 }
 
 
