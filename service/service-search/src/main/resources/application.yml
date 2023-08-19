@@ -1,8 +1,8 @@
 spring:
   application:
-    name: service-product
+    name: service-search
   profiles:
-    active: prod
+    active: dev
   cloud:
     nacos:
       discovery:

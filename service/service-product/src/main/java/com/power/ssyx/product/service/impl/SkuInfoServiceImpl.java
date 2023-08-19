@@ -56,7 +56,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     private SkuInfoService skuInfoServiceProxy;
 
 //    @PostConstruct // TODO 待优化，暂时先这样，有点冗余，初步考虑用内部类，然后用单例模式获取（还没有执行这个想法）
-//    public void init() {
+//    public void init() throws InterruptedException {
+//        Thread.sleep(10000);
 //        skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
 //    }
 
