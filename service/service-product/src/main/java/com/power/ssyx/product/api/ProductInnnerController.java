@@ -32,7 +32,7 @@ public class ProductInnnerController {
     }
 
     // 根据skuId获取sku信息
-    @GetMapping("inner/getSkuInfo/{skuId}")
+    @GetMapping("/inner/getSkuInfo/{skuId}")
     public SkuInfo getSkuInfo(@PathVariable("skuId") Long skuId) {
         return skuInfoService.getById(skuId);
     }

@@ -12,6 +12,8 @@ import com.power.ssyx.model.product.SkuAttrValue;
 import com.power.ssyx.model.product.SkuImage;
 import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.model.product.SkuPoster;
+import com.power.ssyx.mq.constant.MqConst;
+import com.power.ssyx.mq.service.RabbitService;
 import com.power.ssyx.product.mapper.SkuInfoMapper;
 import com.power.ssyx.product.service.SkuAttrValueService;
 import com.power.ssyx.product.service.SkuImageService;
@@ -54,6 +56,9 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     private TransactionTemplate transactionTemplate;
 
     private SkuInfoService skuInfoServiceProxy;
+
+    @Autowired
+    private RabbitService rabbitService;
 
 //    @PostConstruct // TODO 待优化，暂时先这样，有点冗余，初步考虑用内部类，然后用单例模式获取（还没有执行这个想法）
 //    public void init() throws InterruptedException {
@@ -177,6 +182,9 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             this.removeById(id);
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
             skuInfoServiceProxy.deleteSkuOthersBySkuId(id);
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_LOWER,
+                    id);
             return Boolean.TRUE;
         }));
         return Result.ok("删除商品分类成功");
@@ -251,14 +259,20 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     }
 
     @Override
-    public Result publish(Long id, Integer status) {
-        SkuInfo skuInfo = getById(id);
+    public Result publish(Long skuId, Integer status) {
+        SkuInfo skuInfo = getById(skuId);
         if (SystemConstants.CHECK_NOT_PASS.equals(skuInfo.getCheckStatus())) return Result.fail("审核通过才能继续操作");
-        int ss = skuInfoMapper.publish(id, status);
+        int ss = skuInfoMapper.publish(skuId, status);
         if (SystemConstants.PUBLISH_PASS.equals(status)) { // 上架
-            // TODO 整合mq吧数据同步到es里面
+            // 整合mq吧数据同步到es里面
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_UPPER,
+                    skuId);
         } else { // 下架
-            // TODO 整合mq吧数据同步到es里面
+            // 整合mq吧数据同步到es里面
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_LOWER,
+                    skuId);
         }
         return Result.ok(null);
     }
@@ -276,6 +290,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             this.removeByIds(ids);
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
             skuInfoServiceProxy.deleteSkuOthersBySkuIds(ids);
+            for (Long id : ids) {
+                rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                        MqConst.ROUTING_GOODS_LOWER,
+                        id);
+            }
             return Boolean.TRUE;
         });
         return Result.ok("批量删除商品分类成功");

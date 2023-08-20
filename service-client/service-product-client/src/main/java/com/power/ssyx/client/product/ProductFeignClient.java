@@ -16,6 +16,6 @@ public interface ProductFeignClient {
     @GetMapping("/api/product/inner/getCategory/{categoryId}")
     public Category getCategory(@PathVariable("categoryId") Long categoryId);
 
-    @GetMapping("/api/productinner/getSkuInfo/{skuId}")
+    @GetMapping("/api/product/inner/getSkuInfo/{skuId}")
     public SkuInfo getSkuInfo(@PathVariable("skuId") Long skuId);
 }
