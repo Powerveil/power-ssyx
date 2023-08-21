@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.power.ssyx.activity.mapper.CouponInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.power.ssyx.model.activity.CouponInfo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="couponType" column="coupon_type" jdbcType="TINYINT"/>
+        <result property="couponName" column="coupon_name" jdbcType="VARCHAR"/>
+        <result property="amount" column="amount" jdbcType="DECIMAL"/>
+        <result property="conditionAmount" column="condition_amount" jdbcType="DECIMAL"/>
+        <result property="startTime" column="start_time" jdbcType="DATE"/>
+        <result property="endTime" column="end_time" jdbcType="DATE"/>
+        <result property="rangeType" column="range_type" jdbcType="TINYINT"/>
+        <result property="rangeDesc" column="range_desc" jdbcType="VARCHAR"/>
+        <result property="publishCount" column="publish_count" jdbcType="INTEGER"/>
+        <result property="perLimit" column="per_limit" jdbcType="INTEGER"/>
+        <result property="useCount" column="use_count" jdbcType="INTEGER"/>
+        <result property="receiveCount" column="receive_count" jdbcType="INTEGER"/>
+        <result property="expireTime" column="expire_time" jdbcType="TIMESTAMP"/>
+        <result property="publishStatus" column="publish_status" jdbcType="TINYINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,coupon_type,coupon_name,
+        amount,condition_amount,start_time,
+        end_time,range_type,range_desc,
+        publish_count,per_limit,use_count,
+        receive_count,expire_time,publish_status,
+        create_time,update_time,is_deleted
+    </sql>
+</mapper>

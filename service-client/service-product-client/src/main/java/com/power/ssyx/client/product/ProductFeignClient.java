@@ -2,9 +2,13 @@ package com.power.ssyx.client.product;
 
 import com.power.ssyx.model.product.Category;
 import com.power.ssyx.model.product.SkuInfo;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -18,4 +22,8 @@ public interface ProductFeignClient {
 
     @GetMapping("/api/product/inner/getSkuInfo/{skuId}")
     public SkuInfo getSkuInfo(@PathVariable("skuId") Long skuId);
+
+    @ApiOperation("根据skuIds获取sku列表")
+    @GetMapping("/api/product/inner/findSkuInfoList")
+    public List<SkuInfo> getSkuListByIds(@RequestBody List<Long> ids);
 }
