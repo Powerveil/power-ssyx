@@ -71,12 +71,12 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
     public Result saveActivityInfo(ActivityInfo activityInfo) {
         // TODO 一定要使用DTO接受数据！！！
         activityInfo.setId(null);// 不能这样做
-        // 权限名需要存在
+        // 活动名需要存在
         String activityInfoName = activityInfo.getActivityName();
         if (!StringUtils.hasText(activityInfoName)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_NAME_IS_BLANK);
         }
-        // 数据库不能有相同的权限名
+        // 数据库不能有相同的活动名
         LambdaQueryWrapper<ActivityInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ActivityInfo::getActivityName, activityInfoName);
         if (count(queryWrapper) > 0) {
@@ -94,7 +94,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (Objects.isNull(activityInfo.getId())) {
             return Result.build(null, ResultCodeEnum.ID_IS_NULL);
         }
-        // 权限名需要存在
+        // 活动名需要存在
         String activityInfoName = activityInfo.getActivityName();
         if (!StringUtils.hasText(activityInfoName)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_NAME_IS_BLANK);
