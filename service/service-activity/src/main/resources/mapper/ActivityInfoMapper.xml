@@ -22,4 +22,21 @@
         activity_desc,start_time,end_time,
         create_time,update_time,is_deleted
     </sql>
+    <select id="selectSkuIdListExist" resultType="java.lang.Long">
+        select b.sku_id
+        from activity_info as a left join activity_sku as b on a.id = b.activity_id
+        where
+        <choose>
+            <when test="ids != null and ids.size > 0">
+                b.sku_id in
+                <foreach item="item" collection="ids" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+                and now() between a.start_time and a.end_time
+            </when>
+            <otherwise>
+                1 = -1
+            </otherwise>
+        </choose>
+    </select>
 </mapper>

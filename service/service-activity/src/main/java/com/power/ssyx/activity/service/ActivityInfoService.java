@@ -3,6 +3,7 @@ package com.power.ssyx.activity.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.ActivityInfo;
+import com.power.ssyx.vo.activity.ActivityRuleVo;
 
 import java.util.List;
 
@@ -26,4 +27,8 @@ public interface ActivityInfoService extends IService<ActivityInfo> {
     Result deleteActivityInfoByIds(List<Long> ids);
 
     Result findActivityRuleList(Long id);
+
+    Result saveActivityRule(ActivityRuleVo activityRuleVo);
+
+    Result findSkuInfoByKeyword(String keyword);
 }

@@ -8,16 +8,21 @@ import com.power.ssyx.activity.mapper.ActivityInfoMapper;
 import com.power.ssyx.activity.mapper.ActivityRuleMapper;
 import com.power.ssyx.activity.mapper.ActivitySkuMapper;
 import com.power.ssyx.activity.service.ActivityInfoService;
+import com.power.ssyx.activity.service.ActivityRuleService;
+import com.power.ssyx.activity.service.ActivitySkuService;
 import com.power.ssyx.client.product.ProductFeignClient;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.enums.ActivityType;
 import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.model.activity.ActivityRule;
 import com.power.ssyx.model.activity.ActivitySku;
 import com.power.ssyx.model.product.SkuInfo;
+import com.power.ssyx.vo.activity.ActivityRuleVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -44,6 +49,16 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
     @Autowired
     private ProductFeignClient productFeignClient;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    @Autowired
+    private ActivityRuleService activityRuleService;
+
+    @Autowired
+    private ActivitySkuService activitySkuService;
+
+
     @Override
     public Result getPageList(Integer page, Integer limit) {
         Page<ActivityInfo> pageParam = new Page<>(page, limit);
@@ -64,6 +79,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
     @Override
     public Result get(Integer id) {
         ActivityInfo activityInfo = this.getById(id);
+        activityInfo.setActivityTypeString(activityInfo.getActivityType().getComment());
         return Result.ok(activityInfo);
     }
 
@@ -150,6 +166,68 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         List<SkuInfo> skuInfoList = productFeignClient.getSkuListByIds(skuIds);
         result.put("skuInfoList", skuInfoList);
         return Result.ok(result);
+    }
+
+    @Override
+    public Result saveActivityRule(ActivityRuleVo activityRuleVo) {
+        // 第一步 根据活动id删除之前规则数据
+        // TODO 安全性校验
+        Long activityId = activityRuleVo.getActivityId();
+        ActivityInfo activityInfo = getById(activityId);
+        ActivityType activityType = activityInfo.getActivityType();
+
+        List<ActivityRule> activityRuleList = activityRuleVo.getActivityRuleList().stream().map(item -> {
+            item.setActivityId(activityId);
+            item.setActivityType(activityType);
+            return item;
+        }).collect(Collectors.toList());
+
+
+        List<ActivitySku> activitySkuList = activityRuleVo.getActivitySkuList().stream().map(item -> {
+            item.setActivityId(activityId);
+            return item;
+        }).collect(Collectors.toList());
+
+
+        transactionTemplate.execute((status -> {
+            //ActivityRule数据删除
+            activityRuleMapper.
+                    delete(new LambdaQueryWrapper<ActivityRule>().eq(ActivityRule::getActivityId, activityId));
+            //ActivitySku数据删除
+            activitySkuMapper.
+                    delete(new LambdaQueryWrapper<ActivitySku>().eq(ActivitySku::getActivityId, activityId));
+            activityRuleService.saveBatch(activityRuleList);
+            activitySkuService.saveBatch(activitySkuList);
+
+            return Boolean.TRUE;
+        }));
+
+
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result findSkuInfoByKeyword(String keyword) {
+        // 第一步 根据关键字查询sku匹配内容列表
+        // (1) service-product模块创建接口 根据关键字查询sku匹配内容列表
+        // (2) service-activity远程调用得到sku内容列表
+        List<SkuInfo> skuInfoByKeyword = productFeignClient.findSkuInfoByKeyword(keyword);
+
+        List<Long> ids = skuInfoByKeyword.stream().map(SkuInfo::getId).collect(Collectors.toList());
+
+        if (!Objects.isNull(ids)) {
+            // 第二步 判断添加之前是否参加过活动，如果之前添加过，活动正在进行中，排除商品
+            // (1) 查询两张表判断 activity_info 和 activity_sku，编写SQL语句实现
+            //TODO 改为set
+            List<Long> existIds = baseMapper.selectSkuIdListExist(ids);
+
+            // (2) 判断逻辑处理
+            skuInfoByKeyword = skuInfoByKeyword.stream().filter(item -> {
+                return !existIds.contains(item.getId());
+            }).collect(Collectors.toList());
+
+        }
+        return Result.ok(skuInfoByKeyword);
     }
 }
 

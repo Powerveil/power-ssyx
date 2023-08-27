@@ -2,6 +2,7 @@ server:
   port: 8205
 
 mybatis-plus:
+  type-enums-package: com.power.ssyx.enums
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 

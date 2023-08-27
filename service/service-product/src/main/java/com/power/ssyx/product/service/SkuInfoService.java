@@ -41,4 +41,6 @@ public interface SkuInfoService extends IService<SkuInfo> {
     Result isNewPerson(Long id, Integer status);
 
     List<SkuInfo> getSkuListByIds(List<Long> ids);
+
+    List<SkuInfo> findSkuInfoByKeyword(String keyword);
 }

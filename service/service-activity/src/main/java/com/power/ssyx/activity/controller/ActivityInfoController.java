@@ -3,6 +3,7 @@ package com.power.ssyx.activity.controller;
 import com.power.ssyx.activity.service.ActivityInfoService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.ActivityInfo;
+import com.power.ssyx.vo.activity.ActivityRuleVo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -66,13 +67,24 @@ public class ActivityInfoController {
     // 营销活动规则相关接口
 
     // 1.根据活动id获取活动规则数据
-    @GetMapping("/findActivityRuleList{id}")
+    @GetMapping("/findActivityRuleList/{id}")
     public Result findActivityRuleList(@PathVariable(value = "id") Long id) {
         return activityInfoService.findActivityRuleList(id);
     }
 
     // 2.在活动里面添加规则数据
 
+    @ApiOperation("")
+    @PostMapping("/saveActivityRule")
+    public Result saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
+        return activityInfoService.saveActivityRule(activityRuleVo);
+    }
+
     // 3.根据关键字查询匹配sku信息
 
+    @ApiOperation("")
+    @GetMapping("/findSkuInfoByKeyword/{keyword}")
+    public Result findSkuInfoByKeyword(@PathVariable(value = "keyword") String keyword) {
+        return activityInfoService.findSkuInfoByKeyword(keyword);
+    }
 }

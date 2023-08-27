@@ -4,11 +4,11 @@ import com.power.ssyx.model.product.Category;
 import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.product.service.CategoryService;
 import com.power.ssyx.product.service.SkuInfoService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -25,15 +25,30 @@ public class ProductInnnerController {
     private SkuInfoService skuInfoService;
 
     // 根据分裂Id获取分类信息
+    @ApiOperation("根据分裂Id获取分类信息")
     @GetMapping("/inner/getCategory/{categoryId}")
-    public Category getCategory(@PathVariable("categoryId") Long categoryId) {
+    public Category getCategory(@PathVariable(value = "categoryId") Long categoryId) {
         Category category = categoryService.getById(categoryId);
         return category;
     }
 
     // 根据skuId获取sku信息
+    @ApiOperation("根据skuId获取sku信息")
     @GetMapping("/inner/getSkuInfo/{skuId}")
-    public SkuInfo getSkuInfo(@PathVariable("skuId") Long skuId) {
+    public SkuInfo getSkuInfo(@PathVariable(value = "skuId") Long skuId) {
         return skuInfoService.getById(skuId);
+    }
+
+    @ApiOperation("根据skuIds获取sku列表")
+    @GetMapping("/inner/findSkuInfoList")
+    public List<SkuInfo> getSkuListByIds(@RequestParam("ids") List<Long> ids) {
+        return skuInfoService.getSkuListByIds(ids);
+    }
+
+    // 根据关键字匹配sku列表
+    @ApiOperation("根据关键字匹配sku列表")
+    @GetMapping("/inner/findSkuInfoByKeyword/{keyword}")
+    public List<SkuInfo> findSkuInfoByKeyword(@PathVariable(value = "keyword") String keyword) {
+        return skuInfoService.findSkuInfoByKeyword(keyword);
     }
 }

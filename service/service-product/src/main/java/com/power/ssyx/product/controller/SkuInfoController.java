@@ -1,7 +1,6 @@
 package com.power.ssyx.product.controller;
 
 import com.power.ssyx.common.result.Result;
-import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.product.service.SkuInfoService;
 import com.power.ssyx.vo.product.SkuInfoQueryVo;
 import com.power.ssyx.vo.product.SkuInfoVo;
@@ -91,10 +90,4 @@ public class SkuInfoController {
         return skuInfoService.isNewPerson(id, status);
     }
 
-
-    @ApiOperation("根据skuIds获取sku列表")
-    @GetMapping("/inner/findSkuInfoList")
-    public List<SkuInfo> getSkuListByIds(@RequestBody List<Long> ids) {
-        return skuInfoService.getSkuListByIds(ids);
-    }
 }

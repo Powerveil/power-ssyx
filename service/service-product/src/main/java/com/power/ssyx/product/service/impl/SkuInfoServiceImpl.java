@@ -292,6 +292,14 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     }
 
     @Override
+    public List<SkuInfo> findSkuInfoByKeyword(String keyword) {
+        LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(SkuInfo::getSkuName, keyword);
+        List<SkuInfo> list = list(queryWrapper);
+        return list;
+    }
+
+    @Override
     @Transactional(rollbackFor = {Exception.class})
     public Result deleteSkuInfoByIds(List<Long> ids) {
         transactionTemplate.execute((status) -> {
