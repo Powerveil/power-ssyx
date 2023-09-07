@@ -1,7 +1,10 @@
 package com.power.ssyx.activity.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.CouponInfo;
+
+import java.util.List;
 
 /**
  * @author power
@@ -10,4 +13,17 @@ import com.power.ssyx.model.activity.CouponInfo;
  */
 public interface CouponInfoService extends IService<CouponInfo> {
 
+    Result getPageList(Integer page, Integer limit);
+
+    Result get(Integer id);
+
+    Result saveCouponInfo(CouponInfo couponInfo);
+
+    Result updateCouponInfoById(CouponInfo couponInfo);
+
+    Result deleteCouponInfoById(Integer id);
+
+    Result deleteCouponInfoByIds(List<Long> ids);
+
+    Result findCouponRuleList(Long id);
 }

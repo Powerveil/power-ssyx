@@ -25,12 +25,19 @@ public class ProductInnnerController {
     private SkuInfoService skuInfoService;
 
     // 根据分裂Id获取分类信息
-    @ApiOperation("根据分裂Id获取分类信息")
+    @ApiOperation("根据分类Id获取分类信息")
     @GetMapping("/inner/getCategory/{categoryId}")
     public Category getCategory(@PathVariable(value = "categoryId") Long categoryId) {
         Category category = categoryService.getById(categoryId);
         return category;
     }
+
+    @ApiOperation("根据categoryIds获取category列表")
+    @GetMapping("/inner/getCategoryListByIds")
+    public List<Category> getCategoryListByIds(@RequestParam("ids") List<Long> ids) {
+        return categoryService.getCategoryListByIds(ids);
+    }
+
 
     // 根据skuId获取sku信息
     @ApiOperation("根据skuId获取sku信息")

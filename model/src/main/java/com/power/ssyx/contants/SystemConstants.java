@@ -33,4 +33,15 @@ public class SystemConstants {
      */
     public static final Integer IS_NOT_NEW_PERSON = 0;
 
+
+    /**
+     * shequ-activity数据库中coupon_range表中类型为商品
+     */
+    public static final Integer RANGE_TYPE_IS_SKU = 1;
+    /**
+     * shequ-activity数据库中coupon_range表中类型为分类
+     */
+    public static final Integer RANGE_TYPE_IS_CATEGORY = 1;
+
+
 }

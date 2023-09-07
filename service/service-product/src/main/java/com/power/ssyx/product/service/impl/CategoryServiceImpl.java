@@ -115,6 +115,14 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         List<Category> list = list(queryWrapper);
         return Result.ok(list);
     }
+
+    @Override
+    public List<Category> getCategoryListByIds(List<Long> ids) {
+        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Category::getId, ids);
+        List<Category> categoryList = list(queryWrapper);
+        return categoryList;
+    }
 }
 
 
