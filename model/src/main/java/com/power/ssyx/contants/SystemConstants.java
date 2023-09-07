@@ -41,7 +41,7 @@ public class SystemConstants {
     /**
      * shequ-activity数据库中coupon_range表中类型为分类
      */
-    public static final Integer RANGE_TYPE_IS_CATEGORY = 1;
+    public static final Integer RANGE_TYPE_IS_CATEGORY = 2;
 
 
 }
