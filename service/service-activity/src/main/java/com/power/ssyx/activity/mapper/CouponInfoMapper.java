@@ -3,6 +3,9 @@ package com.power.ssyx.activity.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.activity.CouponInfo;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @author power
@@ -13,6 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CouponInfoMapper extends BaseMapper<CouponInfo> {
 
+    List<Long> selectSkuIdListExist(@Param("ids") List<Long> ids, @Param("couponInfoId") Long couponInfoId);
 }
 
 

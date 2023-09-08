@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * @author Powerveil
@@ -12,6 +13,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableDiscoveryClient
 //@EnableFeignClients
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true) // 注意这里的 exposeProxy 设置为 true
 @EnableFeignClients(basePackages = {"com.power.ssyx"})
 public class ServiceActivityApplication {
     public static void main(String[] args) {

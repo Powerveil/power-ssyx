@@ -33,6 +33,7 @@
                     #{item}
                 </foreach>
                 and now() between a.start_time and a.end_time
+                and b.is_deleted = 0
             </when>
             <otherwise>
                 1 = -1

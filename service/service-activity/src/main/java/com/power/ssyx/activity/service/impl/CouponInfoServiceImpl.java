@@ -10,11 +10,13 @@ import com.power.ssyx.activity.service.CouponRangeService;
 import com.power.ssyx.client.product.ProductFeignClient;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
-import com.power.ssyx.contants.SystemConstants;
+import com.power.ssyx.enums.CouponRangeType;
 import com.power.ssyx.model.activity.CouponInfo;
 import com.power.ssyx.model.activity.CouponRange;
 import com.power.ssyx.model.product.Category;
 import com.power.ssyx.model.product.SkuInfo;
+import com.power.ssyx.vo.activity.CouponRuleVo;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,8 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
 
     @Autowired
     private CouponRangeService couponRangeService;
+
+    private CouponInfoService couponInfoServiceProxy;
 
 
     @Override
@@ -158,11 +162,14 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         List<Long> Ids = couponRangeService.list(queryWrapper)
                 .stream().map(CouponRange::getRangeId).collect(Collectors.toList());
         if (!Ids.isEmpty()) {
-            if (SystemConstants.RANGE_TYPE_IS_SKU.equals(type)) {
+//            if (SystemConstants.RANGE_TYPE_IS_SKU.equals(type)) {
+            // TODO 严重bug
+            if (CouponRangeType.SKU.getCode().equals(type)) {
                 // 如果规则类型是SKU 得到skuId，远程调用根据多个skuId值获取对应sku信息
                 skuInfoList = productFeignClient.getSkuListByIds(Ids);
                 result.put("skuInfoList", skuInfoList);
-            } else if (SystemConstants.RANGE_TYPE_IS_CATEGORY.equals(type)) {
+//            } else if (SystemConstants.RANGE_TYPE_IS_CATEGORY.equals(type)) {
+            } else if (CouponRangeType.CATEGORY.getCode().equals(type)) {
                 // 如果规则类型是分类，得到分类Id，远程调用根据多个分类Id值获取对应分类信息
                 categoryList = productFeignClient.getCategoryListByIds(Ids);
                 result.put("categoryList", categoryList);
@@ -195,6 +202,60 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
 
 
         return Result.ok(result);
+    }
+
+    @Override
+    public Result saveCouponRule(CouponRuleVo couponRuleVo) {
+        // TODO 添加还是更新？
+        // 根据优惠卷id删除规则数据
+        Long couponId = couponRuleVo.getCouponId();
+
+        CouponInfo couponInfo = getById(couponId);
+        couponInfo.setRangeType(couponRuleVo.getRangeType());
+        couponInfo.setAmount(couponRuleVo.getAmount());
+        couponInfo.setConditionAmount(couponRuleVo.getConditionAmount());
+        couponInfo.setRangeDesc(couponRuleVo.getRangeDesc());
+//        // TODO 事务
+//        save(couponInfo);
+
+        LambdaQueryWrapper<CouponRange> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CouponRange::getCouponId, couponId);
+
+        List<CouponRange> couponRangeList = couponRuleVo.getCouponRangeList();
+        if (!couponRangeList.isEmpty()) {
+            couponRangeList.forEach(item -> item.setCouponId(couponId));
+        }
+
+        transactionTemplate.execute(status -> {
+            couponRangeService.remove(queryWrapper);
+            // 更新优惠卷基本信息
+            // 防止调用this
+            couponInfoServiceProxy = (CouponInfoService) AopContext.currentProxy();
+            couponInfoServiceProxy.updateById(couponInfo);
+            // 添加优惠卷新规则数据
+            couponRangeService.saveBatch(couponRangeList);
+            return Boolean.TRUE;
+        });
+
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result findCouponByKeyword2(String keyword, Long couponInfoId) {
+        List<SkuInfo> skuInfoByKeyword = productFeignClient.findSkuInfoByKeyword(keyword);
+
+        List<Long> ids = skuInfoByKeyword.stream().map(SkuInfo::getId).collect(Collectors.toList());
+
+        if (!Objects.isNull(ids)) {
+            List<Long> existIds = baseMapper.selectSkuIdListExist(ids, couponInfoId);
+
+            // (2) 判断逻辑处理
+            skuInfoByKeyword = skuInfoByKeyword.stream().filter(item -> {
+                return !existIds.contains(item.getId());
+            }).collect(Collectors.toList());
+        }
+
+        return Result.ok(skuInfoByKeyword);
     }
 
 

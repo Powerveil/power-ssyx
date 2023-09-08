@@ -3,6 +3,7 @@ package com.power.ssyx.activity.controller;
 import com.power.ssyx.activity.service.CouponInfoService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.CouponInfo;
+import com.power.ssyx.vo.activity.CouponRuleVo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -70,19 +71,20 @@ public class CouponInfoController {
         return couponInfoService.findCouponRuleList(id);
     }
 
-//    // 2.在优惠卷里面添加规则数据
-//
-//    @ApiOperation("")
-//    @PostMapping("/saveCouponRule")
-//    public Result saveActivityRule(@RequestBody ActivityRuleVo activityRuleVo) {
-//        return couponInfoService.saveCouponRule(activityRuleVo);
-//    }
-//
-//    // 3.根据关键字查询匹配sku信息
-//
-//    @ApiOperation("")
-//    @GetMapping("/findCouponByKeyword/{keyword}")
-//    public Result findCouponByKeyword(@PathVariable(value = "keyword") String keyword) {
-//        return couponInfoService.findCouponByKeyword(keyword);
-//    }
+    // 2.在优惠卷里面添加规则数据
+
+    @ApiOperation("")
+    @PostMapping("/saveCouponRule")
+    public Result saveCouponRule(@RequestBody CouponRuleVo couponRuleVo) {
+        return couponInfoService.saveCouponRule(couponRuleVo);
+    }
+
+    // 3.根据关键字查询匹配sku信息
+
+    @ApiOperation("")
+    @GetMapping("/findCouponByKeyword2/{keyword}/{couponInfoId}")
+    public Result findCouponByKeyword2(@PathVariable(value = "keyword") String keyword,
+                                       @PathVariable(value = "couponInfoId") Long couponInfoId) {
+        return couponInfoService.findCouponByKeyword2(keyword, couponInfoId);
+    }
 }
