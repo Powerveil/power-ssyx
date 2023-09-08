@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Api(tags = "属性分组接口")
 @RestController
-@CrossOrigin
+//@CrossOrigin
 @RequestMapping("/admin/product/attrGroup")
 public class AttrGroupController {
     @Autowired

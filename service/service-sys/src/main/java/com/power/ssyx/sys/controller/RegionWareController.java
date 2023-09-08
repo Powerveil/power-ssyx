@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * @Date 2023/8/3 20:58
  */
 @RestController
-@CrossOrigin
+//@CrossOrigin
 @Api(tags = "区域仓库接口")
 @RequestMapping("/admin/sys/regionWare")
 public class RegionWareController {

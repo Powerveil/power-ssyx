@@ -16,7 +16,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/admin/activity/couponInfo")
-@CrossOrigin
+//@CrossOrigin
 public class CouponInfoController {
     @Autowired
     private CouponInfoService couponInfoService;

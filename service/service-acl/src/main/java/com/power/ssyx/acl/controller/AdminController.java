@@ -19,7 +19,7 @@ import java.util.Map;
  */
 @Api(tags = "用户接口")
 @RestController
-@CrossOrigin
+//@CrossOrigin
 @RequestMapping("/admin/acl/user")
 public class AdminController {
 
