@@ -1,4 +1,4 @@
-package com.power.ssyx.utils;
+package com.power.ssyx.user.utils;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;

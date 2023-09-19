@@ -1,4 +1,4 @@
-package com.power.ssyx.utils;
+package com.power.ssyx.user.utils;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

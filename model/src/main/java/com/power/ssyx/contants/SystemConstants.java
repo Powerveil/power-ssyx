@@ -43,5 +43,11 @@ public class SystemConstants {
      */
     public static final Integer RANGE_TYPE_IS_CATEGORY = 2;
 
+    /**
+     * shequ-user数据库中user_delivery表中is_default为默认 1为默认
+     */
+    public static final Integer USER_DELIVERY_IS_NOT_DEFAULT = 0;
+    public static final Integer USER_DELIVERY_IS_DEFAULT = 1;
+
 
 }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.power.ssyx.user.mapper.LeaderMapper">
+
+    <resultMap id="BaseResultMap" type="com.power.ssyx.model.user.Leader">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="regionId" column="region_id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="phone" column="phone" jdbcType="VARCHAR"/>
+        <result property="idNo" column="id_no" jdbcType="VARCHAR"/>
+        <result property="idNoUrl1" column="id_no_url1" jdbcType="VARCHAR"/>
+        <result property="idNoUrl2" column="id_no_url2" jdbcType="VARCHAR"/>
+        <result property="takeName" column="take_name" jdbcType="VARCHAR"/>
+        <result property="takeType" column="take_type" jdbcType="CHAR"/>
+        <result property="province" column="province" jdbcType="BIGINT"/>
+        <result property="city" column="city" jdbcType="BIGINT"/>
+        <result property="district" column="district" jdbcType="BIGINT"/>
+        <result property="detailAddress" column="detail_address" jdbcType="VARCHAR"/>
+        <result property="longitude" column="longitude" jdbcType="DECIMAL"/>
+        <result property="latitude" column="latitude" jdbcType="DECIMAL"/>
+        <result property="haveStore" column="have_store" jdbcType="CHAR"/>
+        <result property="storePath" column="store_path" jdbcType="VARCHAR"/>
+        <result property="workTime" column="work_time" jdbcType="VARCHAR"/>
+        <result property="workStatus" column="work_status" jdbcType="TINYINT"/>
+        <result property="checkStatus" column="check_status" jdbcType="TINYINT"/>
+        <result property="checkTime" column="check_time" jdbcType="TIMESTAMP"/>
+        <result property="checkUser" column="check_user" jdbcType="VARCHAR"/>
+        <result property="checkContent" column="check_content" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,user_id,region_id,
+        name,phone,id_no,
+        id_no_url1,id_no_url2,take_name,
+        take_type,province,city,
+        district,detail_address,longitude,
+        latitude,have_store,store_path,
+        work_time,work_status,check_status,
+        check_time,check_user,check_content,
+        create_time,update_time,is_deleted
+    </sql>
+</mapper>
