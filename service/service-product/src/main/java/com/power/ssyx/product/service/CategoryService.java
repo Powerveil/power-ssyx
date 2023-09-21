@@ -29,4 +29,7 @@ public interface CategoryService extends IService<Category> {
     Result findAllList();
 
     List<Category> getCategoryListByIds(List<Long> ids);
+
+    List<Category> findAllCategoryList();
+
 }

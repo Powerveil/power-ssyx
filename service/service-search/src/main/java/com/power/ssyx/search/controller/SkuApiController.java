@@ -1,12 +1,15 @@
 package com.power.ssyx.search.controller;
 
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.search.SkuEs;
 import com.power.ssyx.search.service.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -27,5 +30,10 @@ public class SkuApiController {
     @GetMapping("/inner/lowerSku/{skuId}")
     public Result lowerSku(@PathVariable("skuId") Long skuId) {
         return skuService.lowerSku(skuId);
+    }
+
+    @GetMapping("/inner/findHotSkuList")
+    public List<SkuEs> findHotSkuList() {
+        return skuService.findHotSkuList();
     }
 }

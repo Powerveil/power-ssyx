@@ -58,4 +58,16 @@ public class ProductInnnerController {
     public List<SkuInfo> findSkuInfoByKeyword(@PathVariable(value = "keyword") String keyword) {
         return skuInfoService.findSkuInfoByKeyword(keyword);
     }
+
+    // 获取所有分类
+    @GetMapping("/inner/findAllCategoryList")
+    public List<Category> findAllCategoryList() {
+        return categoryService.findAllCategoryList();
+    }
+
+    // 获取信任专享商品
+    @GetMapping("/inner/findNewPersonSkuInfoList")
+    public List<SkuInfo> findNewPersonSkuInfoList() {
+        return skuInfoService.findNewPersonSkuInfoList();
+    }
 }

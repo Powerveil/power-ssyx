@@ -23,7 +23,9 @@ public class LoginMvcConfigurerAdapter extends WebMvcConfigurationSupport {
         registry.addInterceptor(
                         new UserLoginInterceptor(redisTemplate))
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/user/weixin/wxLogin/*");
+                .excludePathPatterns("/api/user/weixin/wxLogin/*")
+                .excludePathPatterns("/api/*/*/inner/**")
+                .excludePathPatterns("/api/*/inner/**");
         super.addInterceptors(registry);
     }
 }

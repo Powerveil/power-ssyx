@@ -109,7 +109,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 5.根据userId查询提货点和团长信息
         //// 提货点 user表 user_delivery表
         //// 团长   leader表
-        LeaderAddressVo leaderAddressVo = getLeaderAddressByUserId(user.getId());
+        LeaderAddressVo leaderAddressVo = getLeaderAddressVoByUserId(user.getId());
 
         // 6.使用Jwt工具根据userId和userName生成token字符串
         String token = JwtHelper.createToken(user.getId(), user.getNickName());
@@ -155,7 +155,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return userLoginVo;
     }
 
-    private LeaderAddressVo getLeaderAddressByUserId(Long userId) {
+    @Override
+    public LeaderAddressVo getLeaderAddressVoByUserId(Long userId) {
         // 根据userId查询用户默认的团长id
         UserDelivery userDelivery = userDeliveryMapper.selectOne(
                 new LambdaQueryWrapper<UserDelivery>()

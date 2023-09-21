@@ -300,6 +300,16 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     }
 
     @Override
+    public List<SkuInfo> findNewPersonSkuInfoList() {
+        LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SkuInfo::getIsNewPerson, SystemConstants.IS_NEW_PERSON);
+        queryWrapper.eq(SkuInfo::getPublishStatus, SystemConstants.PUBLISH_PASS);
+        queryWrapper.orderByDesc(SkuInfo::getStock); //库存排序
+        queryWrapper.last("limit 2");
+        return list(queryWrapper);
+    }
+
+    @Override
     @Transactional(rollbackFor = {Exception.class})
     public Result deleteSkuInfoByIds(List<Long> ids) {
         transactionTemplate.execute((status) -> {

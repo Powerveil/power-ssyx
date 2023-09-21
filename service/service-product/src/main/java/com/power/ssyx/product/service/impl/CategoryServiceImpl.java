@@ -123,8 +123,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         List<Category> categoryList = list(queryWrapper);
         return categoryList;
     }
+
+    @Override
+    public List<Category> findAllCategoryList() {
+        return list();
+    }
 }
-
-
-
-

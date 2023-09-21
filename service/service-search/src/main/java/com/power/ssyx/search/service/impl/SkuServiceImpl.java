@@ -9,8 +9,12 @@ import com.power.ssyx.model.search.SkuEs;
 import com.power.ssyx.search.repository.SkuRepository;
 import com.power.ssyx.search.service.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -67,5 +71,16 @@ public class SkuServiceImpl implements SkuService {
     public Result lowerSku(Long skuId) {
         skuRepository.deleteById(skuId);
         return null;
+    }
+
+    @Override
+    public List<SkuEs> findHotSkuList() {
+        // find read get开头
+        // 关联条件关键字
+        // 0代表第一页
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<SkuEs> pageModel = skuRepository.findByOrderByHotScoreDesc(pageable);
+        List<SkuEs> skuEsList = pageModel.getContent();
+        return skuEsList;
     }
 }
