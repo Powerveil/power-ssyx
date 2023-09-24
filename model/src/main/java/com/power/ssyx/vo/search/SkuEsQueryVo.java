@@ -7,7 +7,7 @@ import lombok.Data;
 public class SkuEsQueryVo {
 
     private Long categoryId;
-    ;//三级分类id
+    //三级分类id
 
     private String keyword;//检索的关键字
 

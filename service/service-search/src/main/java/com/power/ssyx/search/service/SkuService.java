@@ -2,6 +2,7 @@ package com.power.ssyx.search.service;
 
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.search.SkuEs;
+import com.power.ssyx.vo.search.SkuEsQueryVo;
 
 import java.util.List;
 
@@ -17,4 +18,5 @@ public interface SkuService {
 
     List<SkuEs> findHotSkuList();
 
+    Result search(Integer page, Integer limit, SkuEsQueryVo skuEsQueryVo);
 }

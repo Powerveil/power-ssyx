@@ -16,6 +16,10 @@
         <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
     </resultMap>
 
+    <resultMap id="ActivityRuleMap" type="com.power.ssyx.model.activity.ActivityRule">
+
+    </resultMap>
+
     <sql id="Base_Column_List">
         id
         ,activity_name,activity_type,
@@ -34,6 +38,26 @@
                 </foreach>
                 and now() between a.start_time and a.end_time
                 and b.is_deleted = 0
+            </when>
+            <otherwise>
+                1 = -1
+            </otherwise>
+        </choose>
+    </select>
+    <select id="findActivityRules" resultMap="ActivityRuleMap">
+        select info.activity_type as activityType,
+        rule.id,rule.activity_id,rule.condition_amount,rule.condition_num,rule.benefit_amount,rule.benefit_discount
+        from activity_info as info
+        left join activity_sku as sku on info.id = sku.activity_id
+        left join activity_rule as rule on info.id = rule.activity_id
+        where
+        <choose>
+            <when test="skuId != null">
+                now() between info.start_time and info.end_time
+                and info.is_deleted = 0
+                and sku.is_deleted = 0
+                and rule.is_deleted = 0
+                and sku.sku_id = #{skuId}
             </when>
             <otherwise>
                 1 = -1

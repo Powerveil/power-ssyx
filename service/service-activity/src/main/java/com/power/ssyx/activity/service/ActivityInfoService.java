@@ -6,6 +6,7 @@ import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.vo.activity.ActivityRuleVo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author power
@@ -31,4 +32,6 @@ public interface ActivityInfoService extends IService<ActivityInfo> {
     Result saveActivityRule(ActivityRuleVo activityRuleVo);
 
     Result findSkuInfoByKeyword(String keyword);
+
+    Map<Long, List<String>> findActivity(List<Long> skuIdList);
 }

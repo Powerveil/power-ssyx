@@ -23,12 +23,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -228,6 +226,44 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
         }
         return Result.ok(skuInfoByKeyword);
+    }
+
+    @Override
+    public Map<Long, List<String>> findActivity(List<Long> skuIdList) {
+        Map<Long, List<String>> result = new HashMap<>();
+        skuIdList.forEach(skuId -> {
+            List<ActivityRule> activityRuleList = baseMapper.findActivityRules(skuId);
+            if (!CollectionUtils.isEmpty(activityRuleList)) {
+                List<String> ruleList = new ArrayList<>();
+                // 把规则名称处理
+                activityRuleList.forEach(activityRule -> ruleList.add(this.getRuleDesc(activityRule)));
+                result.put(skuId, ruleList);
+            }
+        });
+
+        return result;
+    }
+
+    //构造规则名称的方法
+    private String getRuleDesc(ActivityRule activityRule) {
+        ActivityType activityType = activityRule.getActivityType();
+        StringBuffer ruleDesc = new StringBuffer();
+        if (activityType == ActivityType.FULL_REDUCTION) {
+            ruleDesc
+                    .append("满")
+                    .append(activityRule.getConditionAmount())
+                    .append("元减")
+                    .append(activityRule.getBenefitAmount())
+                    .append("元");
+        } else {
+            ruleDesc
+                    .append("满")
+                    .append(activityRule.getConditionNum())
+                    .append("元打")
+                    .append(activityRule.getBenefitDiscount())
+                    .append("折");
+        }
+        return ruleDesc.toString();
     }
 }
 

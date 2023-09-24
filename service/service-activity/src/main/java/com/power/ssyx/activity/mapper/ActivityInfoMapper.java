@@ -2,6 +2,7 @@ package com.power.ssyx.activity.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.activity.ActivityInfo;
+import com.power.ssyx.model.activity.ActivityRule;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,6 +18,8 @@ import java.util.List;
 public interface ActivityInfoMapper extends BaseMapper<ActivityInfo> {
 
     List<Long> selectSkuIdListExist(@Param("ids") List<Long> ids);
+
+    List<ActivityRule> findActivityRules(@Param("skuId") Long skuId);
 }
 
 
