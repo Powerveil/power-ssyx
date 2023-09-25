@@ -61,12 +61,19 @@ public class SkuServiceImpl implements SkuService {
         skuEs.setIsNewPerson(skuInfo.getIsNewPerson());
         skuEs.setImgUrl(skuInfo.getImgUrl());
         skuEs.setTitle(skuInfo.getSkuName());
+
+        // TODO 下面是原来的普通善品的操作
+        skuEs.setSkuType(0);
+        skuEs.setPrice(skuInfo.getPrice().doubleValue());
+        skuEs.setStock(skuInfo.getStock());
+        skuEs.setSale(skuInfo.getSale());
+        skuEs.setPerLimit(skuInfo.getPerLimit());
         if (skuInfo.getSkuType() == SkuType.COMMON.getCode()) { // 普通商品
-            skuEs.setSkuType(0);
-            skuEs.setPrice(skuInfo.getPrice().doubleValue());
-            skuEs.setStock(skuInfo.getStock());
-            skuEs.setSale(skuInfo.getSale());
-            skuEs.setPerLimit(skuInfo.getPerLimit());
+//            skuEs.setSkuType(0);
+//            skuEs.setPrice(skuInfo.getPrice().doubleValue());
+//            skuEs.setStock(skuInfo.getStock());
+//            skuEs.setSale(skuInfo.getSale());
+//            skuEs.setPerLimit(skuInfo.getPerLimit());
         } else {
             //TODO 待完善-秒杀商品
 
