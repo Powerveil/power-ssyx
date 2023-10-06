@@ -19,4 +19,6 @@ public interface SkuService {
     List<SkuEs> findHotSkuList();
 
     Result search(Integer page, Integer limit, SkuEsQueryVo skuEsQueryVo);
+
+    Boolean incrHotScore(Long skuId);
 }

@@ -3,6 +3,7 @@ package com.power.ssyx.activity.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.ActivityInfo;
+import com.power.ssyx.model.activity.ActivityRule;
 import com.power.ssyx.vo.activity.ActivityRuleVo;
 
 import java.util.List;
@@ -34,4 +35,9 @@ public interface ActivityInfoService extends IService<ActivityInfo> {
     Result findSkuInfoByKeyword(String keyword);
 
     Map<Long, List<String>> findActivity(List<Long> skuIdList);
+
+    Map<String, Object> findActivityAndCoupon(Long skuId, Long userId);
+
+    // 根据skuId获取活动规则数据
+    List<ActivityRule> findActivityRuleBySkuId(Long skuId);
 }

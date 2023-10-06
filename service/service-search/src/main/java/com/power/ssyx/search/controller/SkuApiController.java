@@ -45,4 +45,10 @@ public class SkuApiController {
                           SkuEsQueryVo skuEsQueryVo) {
         return skuService.search(page, limit, skuEsQueryVo);
     }
+
+    // 更新商品热度
+    @GetMapping("/inner/incrHotScore/{skuId}")
+    public Boolean incrHotScore(@PathVariable("skuId") Long skuId) {
+        return skuService.incrHotScore(skuId);
+    }
 }

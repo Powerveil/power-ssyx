@@ -44,4 +44,11 @@ public class RedisConst {
     public static final String SECKILL_USER = "seckill:user:";
     //用户锁定时间 单位：秒
     public static final int SECKILL__TIMEOUT = 60 * 60 * 1;
+
+
+    // 更新商品热度key
+    public static final String HOT_SCORE_KEY = "hotScore";
+
+    // 更新商品热度value前缀
+    public static final String SKU_ID_KEY_PREFIX = "skuId:";
 }

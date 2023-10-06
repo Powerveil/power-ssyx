@@ -31,4 +31,6 @@ public interface CouponInfoService extends IService<CouponInfo> {
     Result saveCouponRule(CouponRuleVo couponRuleVo);
 
     Result findCouponByKeyword2(String keyword, Long couponInfoId);
+
+    List<CouponInfo> findCouponInfoList(Long skuId, Long userId);
 }

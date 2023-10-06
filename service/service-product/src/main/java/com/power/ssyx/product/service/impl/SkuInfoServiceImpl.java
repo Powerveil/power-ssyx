@@ -87,18 +87,19 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 
     @Override
     public Result get(Long id) {
-        SkuInfo skuInfo = this.getById(id);
-        SkuInfoVo skuInfoVo = BeanCopyUtils.copyBean(skuInfo, SkuInfoVo.class);
-        // 商品属性
-        List<SkuAttrValue> skuAttrValueList = skuAttrValueService.getAttrValueList(id);
-        skuInfoVo.setSkuAttrValueList(skuAttrValueList);
-        // 商品图片
-        List<SkuImage> skuImageList = skuImageService.getSkuImageList(id);
-        skuInfoVo.setSkuImagesList(skuImageList);
-        // 商品海报
-        List<SkuPoster> skuPosterList = skuPosterService.getSkuPosterList(id);
-        skuInfoVo.setSkuPosterList(skuPosterList);
-        return Result.ok(skuInfoVo);
+//        SkuInfo skuInfo = this.getById(id);
+//        SkuInfoVo skuInfoVo = BeanCopyUtils.copyBean(skuInfo, SkuInfoVo.class);
+//        // 商品属性
+//        List<SkuAttrValue> skuAttrValueList = skuAttrValueService.getAttrValueList(id);
+//        skuInfoVo.setSkuAttrValueList(skuAttrValueList);
+//        // 商品图片
+//        List<SkuImage> skuImageList = skuImageService.getSkuImageList(id);
+//        skuInfoVo.setSkuImagesList(skuImageList);
+//        // 商品海报
+//        List<SkuPoster> skuPosterList = skuPosterService.getSkuPosterList(id);
+//        skuInfoVo.setSkuPosterList(skuPosterList);
+//        return Result.ok(skuInfoVo);
+        return Result.ok(getSkuInfoVo(id));
     }
 
     @Override
@@ -307,6 +308,24 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         queryWrapper.orderByDesc(SkuInfo::getStock); //库存排序
         queryWrapper.last("limit 2");
         return list(queryWrapper);
+    }
+
+    @Override
+    public SkuInfoVo getSkuInfoVo(Long skuId) {
+        // 根据skuId查询skuInfo
+        SkuInfo skuInfo = this.getById(skuId);
+        SkuInfoVo skuInfoVo = BeanCopyUtils.copyBean(skuInfo, SkuInfoVo.class);
+        // 商品属性
+        List<SkuAttrValue> skuAttrValueList = skuAttrValueService.getAttrValueList(skuId);
+        skuInfoVo.setSkuAttrValueList(skuAttrValueList);
+        // 商品图片
+        List<SkuImage> skuImageList = skuImageService.getSkuImageList(skuId);
+        skuInfoVo.setSkuImagesList(skuImageList);
+        // 商品海报
+        List<SkuPoster> skuPosterList = skuPosterService.getSkuPosterList(skuId);
+        skuInfoVo.setSkuPosterList(skuPosterList);
+
+        return skuInfoVo;
     }
 
     @Override

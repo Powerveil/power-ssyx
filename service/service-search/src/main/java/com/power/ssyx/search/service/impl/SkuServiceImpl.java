@@ -3,6 +3,7 @@ package com.power.ssyx.search.service.impl;
 import com.power.ssyx.client.activity.ActivityFeignClient;
 import com.power.ssyx.client.product.ProductFeignClient;
 import com.power.ssyx.common.auth.AuthContextHolder;
+import com.power.ssyx.common.constant.RedisConst;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.enums.SkuType;
 import com.power.ssyx.model.product.Category;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -22,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +42,9 @@ public class SkuServiceImpl implements SkuService {
 
     @Autowired
     private ActivityFeignClient activityFeignClient;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     public Result upperSku(Long skuId) {
@@ -142,5 +148,25 @@ public class SkuServiceImpl implements SkuService {
 
 
         return Result.ok(pageModel);
+    }
+
+    // 更新商品热度
+    @Override
+    public Boolean incrHotScore(Long skuId) {
+        // redis把欧尼数据，每次+1
+        String value = "skuId:" + skuId;
+        Double hotScore =
+                redisTemplate.opsForZSet().incrementScore(RedisConst.HOT_SCORE_KEY,
+                        RedisConst.SKU_ID_KEY_PREFIX,
+                        1);
+        // 规则
+        if (hotScore % 10 == 0) {
+            // 更新es
+            Optional<SkuEs> optional = skuRepository.findById(skuId);
+            SkuEs skuEs = optional.get();
+            skuEs.setHotScore(Math.round(hotScore));
+            skuRepository.save(skuEs);
+        }
+        return true;
     }
 }
