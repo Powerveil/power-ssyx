@@ -19,8 +19,10 @@ import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.model.activity.ActivityRule;
 import com.power.ssyx.model.activity.ActivitySku;
 import com.power.ssyx.model.activity.CouponInfo;
+import com.power.ssyx.model.order.CartInfo;
 import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.vo.activity.ActivityRuleVo;
+import com.power.ssyx.vo.order.OrderConfirmVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -281,6 +283,26 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             item.setRuleDesc(ruleDesc);
         });
         return activityRuleList;
+    }
+
+    @Override
+    public OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId) {
+
+        // 1.获取购物车，每个购物项参与活动，根据活动规则分组
+        //   一个规则对应多个商品
+
+        // 2.计算参与活动之后金额
+
+        // 3.获取购物车可以使用优惠卷列表
+
+        // 4.计算商品使用优惠卷之后金额，一次只能使用一张优惠卷
+
+        // 5.计算没有参与活动，没有使用优惠卷原始金额
+
+        // 6.参与活动，使用优惠卷总金额
+
+
+        return null;
     }
 
     //构造规则名称的方法

@@ -1,6 +1,8 @@
 package com.power.ssyx.activity.api;
 
 import com.power.ssyx.activity.service.ActivityInfoService;
+import com.power.ssyx.model.order.CartInfo;
+import com.power.ssyx.vo.order.OrderConfirmVo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,14 @@ public class ActivityInfoApiController {
     public Map<String, Object> findActivityAndCoupon(@PathVariable("skuId") Long skuId,
                                                      @PathVariable("userId") Long userId) {
         return activityInfoService.findActivityAndCoupon(skuId, userId);
+    }
+
+    // 获取购物车里面满足条件优惠卷和活动的信息
+    @ApiOperation(value = "获取购物车满足条件的促销与优惠券信息")
+    @PostMapping("/inner/findCartActivityAndCoupon/{userId}")
+    OrderConfirmVo findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
+                                             @PathVariable Long userId) {
+        return activityInfoService.findCartActivityAndCoupon(cartInfoList, userId);
     }
 
 }

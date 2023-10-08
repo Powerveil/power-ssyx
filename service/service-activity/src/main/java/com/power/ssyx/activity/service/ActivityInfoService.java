@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.model.activity.ActivityRule;
+import com.power.ssyx.model.order.CartInfo;
 import com.power.ssyx.vo.activity.ActivityRuleVo;
+import com.power.ssyx.vo.order.OrderConfirmVo;
 
 import java.util.List;
 import java.util.Map;
@@ -40,4 +42,6 @@ public interface ActivityInfoService extends IService<ActivityInfo> {
 
     // 根据skuId获取活动规则数据
     List<ActivityRule> findActivityRuleBySkuId(Long skuId);
+
+    OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId);
 }
