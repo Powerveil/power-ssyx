@@ -209,7 +209,7 @@ public class CartInfoServiceImpl implements CartInfoService {
         Long userId = AuthContextHolder.getUserId();
         List<CartInfo> cartInfoList = (List<CartInfo>) this.cartList();
         OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
-        return null;
+        return Result.ok(orderConfirmVo);
     }
 
 }

@@ -3,6 +3,7 @@ package com.power.ssyx.activity.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.model.activity.ActivityRule;
+import com.power.ssyx.model.activity.ActivitySku;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,6 +22,9 @@ public interface ActivityInfoMapper extends BaseMapper<ActivityInfo> {
 
     // 根据skuId进行查询，查询sku对应活动里面的规则列表
     List<ActivityRule> findActivityRules(@Param("skuId") Long skuId);
+
+    // 根据所有skuId获取参与活动
+    List<ActivitySku> selectCartActivity(@Param("skuIds") List<Long> skuIds);
 }
 
 

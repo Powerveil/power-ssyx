@@ -20,12 +20,32 @@
 
     </resultMap>
 
+
+    <resultMap id="ActivitySkuMap" type="com.power.ssyx.model.activity.ActivitySku">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="activityId" column="activity_id" jdbcType="BIGINT"/>
+        <result property="skuId" column="sku_id" jdbcType="BIGINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
         id
         ,activity_name,activity_type,
         activity_desc,start_time,end_time,
         create_time,update_time,is_deleted
     </sql>
+
+
+    <sql id="ActivitySku_Column_List">
+        acsku
+        .
+        id
+        ,acsku.activity_id,acsku.sku_id,
+        acsku.create_time,acsku.update_time,acsku.is_deleted
+    </sql>
+
     <select id="selectSkuIdListExist" resultType="java.lang.Long">
         select b.sku_id
         from activity_info as a left join activity_sku as b on a.id = b.activity_id
@@ -63,5 +83,28 @@
                 1 = -1
             </otherwise>
         </choose>
+    </select>
+    <!--根据所有skuId获取参与活动 这里链表查询是为了防止活动被失效-->
+    <select id="selectCartActivity" resultMap="ActivitySkuMap">
+        select
+        <include refid="ActivitySku_Column_List"/>
+        from activity_info as info
+        inner join activity_sku as acsku on info.id = acsku.activity_id
+        <where>
+            <choose>
+                <when test="skuIds != null and skuIds.size > 0">
+                    acsku.sku_id in
+                    <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    and now() between info.start_time and info.end_time
+                    and info.is_deleted = 0
+                    and acsku.is_deleted = 0;
+                </when>
+                <otherwise>
+                    1 = -1
+                </otherwise>
+            </choose>
+        </where>
     </select>
 </mapper>
