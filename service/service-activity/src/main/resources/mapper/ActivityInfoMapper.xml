@@ -84,7 +84,7 @@
             </otherwise>
         </choose>
     </select>
-    <!--根据所有skuId获取参与活动 这里链表查询是为了防止活动被失效-->
+    <!--根据所有skuId获取参与活动 这里联表查询是为了防止活动被失效-->
     <select id="selectCartActivity" resultMap="ActivitySkuMap">
         select
         <include refid="ActivitySku_Column_List"/>

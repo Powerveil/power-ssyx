@@ -3,6 +3,7 @@ package com.power.ssyx.activity.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.CouponInfo;
+import com.power.ssyx.model.order.CartInfo;
 import com.power.ssyx.vo.activity.CouponRuleVo;
 
 import java.util.List;
@@ -33,4 +34,6 @@ public interface CouponInfoService extends IService<CouponInfo> {
     Result findCouponByKeyword2(String keyword, Long couponInfoId);
 
     List<CouponInfo> findCouponInfoList(Long skuId, Long userId);
+
+    List<CouponInfo> findCartCouponInfo(List<CartInfo> cartInfoList, Long userId);
 }

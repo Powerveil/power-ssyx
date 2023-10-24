@@ -30,5 +30,6 @@ public interface ActivityFeignClient {
 
     @ApiOperation(value = "获取购物车满足条件的促销与优惠券信息")
     @PostMapping("/api/activity/inner/findCartActivityAndCoupon/{userId}")
-    OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId);
+    OrderConfirmVo findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
+                                             @PathVariable Long userId);
 }

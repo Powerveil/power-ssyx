@@ -84,4 +84,41 @@
           and info.is_deleted = 0
         order by info.amount desc
     </select>
+    <select id="selectCartCouponInfoList" resultMap="BaseResultMap">
+        select info.id
+        , info.coupon_type
+        , info.coupon_name
+        , info.amount
+        , info.condition_amount
+        , info.start_time
+        , info.end_time
+        , info.range_type
+        , info.range_desc
+        , info.publish_count
+        , info.per_limit
+        , info.use_count
+        , info.receive_count
+        , info.expire_time
+        , info.publish_status
+        , info.create_time
+        , info.update_time
+        , info.is_deleted
+        from coupon_info info
+        inner join coupon_use cuse on info.id = cuse.coupon_id
+        <where>
+            <choose>
+                <when test="userId != null">
+                    cuse.user_id = #{userId}
+                    and coupon_status = 1
+                    and info.expire_time >= now()
+                    and info.is_deleted = 0
+                    and cuse.is_deleted = 0
+                </when>
+                <otherwise>
+                    1 = -1
+                </otherwise>
+            </choose>
+        </where>
+        order by info.amount desc
+    </select>
 </mapper>

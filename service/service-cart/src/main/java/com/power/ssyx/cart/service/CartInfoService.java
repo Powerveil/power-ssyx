@@ -19,6 +19,11 @@ public interface CartInfoService {
 
     Result cartList();
 
+    /**
+     * 带优惠卷和优惠活动的购物车列表
+     *
+     * @return
+     */
     Result activityCartList();
 
 }

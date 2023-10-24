@@ -293,22 +293,53 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         // 1.获取购物车，每个购物项参与活动，根据活动规则分组
         //   一个规则对应多个商品
         // CartInfoVo
-        List<CartInfoVo> cartActivityList = this.findCartActivityList(cartInfoList);
+        List<CartInfoVo> cartInfoVoList = this.findCartActivityList(cartInfoList);
 
         // 2.计算参与活动之后金额
 
+        // 我的方法
+//        BigDecimal lastMount = new BigDecimal(0);
+//
+//        cartActivityList.forEach(item -> lastMount.add(item.getActivityRule().getReduceAmount()));
+
+        // 老师的方法
+        BigDecimal activityReduceAmount = cartInfoVoList.stream()
+                .filter(item -> !Objects.isNull(item.getActivityRule())) // 对没有规则的数据进行过滤
+                .map(item -> item.getActivityRule().getReduceAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         // 3.获取购物车可以使用优惠卷列表
+        List<CouponInfo> couponInfoList = couponInfoService.findCartCouponInfo(cartInfoList, userId);
 
         // 4.计算商品使用优惠卷之后金额，一次只能使用一张优惠卷
+        BigDecimal couponReduceAmount = new BigDecimal(0);
+        if (!CollectionUtils.isEmpty(couponInfoList)) {
+            couponReduceAmount = couponInfoList.stream()
+                    .filter(couponInfo -> couponInfo.getIsOptimal().intValue() == 1)
+                    .map(couponInfo -> couponInfo.getAmount())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
 
         // 5.计算没有参与活动，没有使用优惠卷原始金额
+        BigDecimal originalTotalAmount = cartInfoList.stream()
+                // 被选中
+                .filter(cartInfo -> cartInfo.getIsChecked() == 1)
+                .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 6.参与活动，使用优惠卷总金额
-
+        // 6.最终金额
+        BigDecimal toTalAmount = originalTotalAmount.subtract(activityReduceAmount).subtract(couponReduceAmount);
         // 7.封装需要数据到OrderConfirmVo
+        OrderConfirmVo orderTradeVo = new OrderConfirmVo();
+        orderTradeVo.setCarInfoVoList(cartInfoVoList);
+        orderTradeVo.setActivityReduceAmount(activityReduceAmount);
+        orderTradeVo.setCouponInfoList(couponInfoList);
+        orderTradeVo.setCouponReduceAmount(couponReduceAmount);
+        orderTradeVo.setOriginalTotalAmount(originalTotalAmount);
+        orderTradeVo.setTotalAmount(toTalAmount);
 
 
-        return null;
+        return orderTradeVo;
     }
 
     // 获取购物车对应规则数据
@@ -356,7 +387,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
             queryWrapper.in(ActivityRule::getActivityId, activityIdList);
             List<ActivityRule> activityRuleList = activityRuleMapper.selectList(queryWrapper);
             // 封装到activityIdToActivityRuleListMap里面
-            // 根据活动id进行分组
+            // 根据活动id进行分组 这里比较巧妙
             activityIdToActivityRuleListMap = activityRuleList.stream().collect(Collectors.groupingBy(ActivityRule::getActivityId));
         }
 
@@ -381,9 +412,22 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 // 根据activityId获取活动对应规则
                 List<ActivityRule> currentActivityRuleList =
                         activityIdToActivityRuleListMap.get(entry.getKey());
+                //对优惠金额从大到小进行排序
+                if (!CollectionUtils.isEmpty(currentActivityRuleList) && currentActivityRuleList.size() >= 2) {
+//                    currentActivityRuleList.sort((o1, o2) -> o2.getReduceAmount().compareTo(o1.getReduceAmount()));
+
+                    Collections.sort(currentActivityRuleList, new Comparator<ActivityRule>() {
+                        @Override
+                        public int compare(ActivityRule o1, ActivityRule o2) {
+                            return o2.getBenefitAmount().compareTo(o1.getBenefitAmount());
+                        }
+                    });
+                }
+
                 ActivityType activityType = currentActivityRuleList.get(0).getActivityType();
                 // 判断活动类型：满减和打折
                 ActivityRule activityRule = null;
+                // TODO 规则没有最好只有最想让用户看到什么
                 if (ActivityType.FULL_REDUCTION.equals(activityType)) {//满减
                     activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
                 } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) {//满量

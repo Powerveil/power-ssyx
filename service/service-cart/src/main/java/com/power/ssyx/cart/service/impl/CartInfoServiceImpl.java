@@ -203,11 +203,16 @@ public class CartInfoServiceImpl implements CartInfoService {
         return Result.ok(cartInfoList);
     }
 
+    /**
+     * 带优惠卷和优惠活动的购物车列表
+     *
+     * @return
+     */
     @Override
     public Result activityCartList() {
         // 有点烂的代码
         Long userId = AuthContextHolder.getUserId();
-        List<CartInfo> cartInfoList = (List<CartInfo>) this.cartList();
+        List<CartInfo> cartInfoList = (List<CartInfo>) this.cartList().getData();
         OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
         return Result.ok(orderConfirmVo);
     }
