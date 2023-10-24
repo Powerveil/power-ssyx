@@ -60,5 +60,25 @@ public class CartApiController {
         return cartInfoService.activityCartList();
     }
 
+    // 1.根据skuId选中
 
+    @GetMapping("/checkCart/{skuId}/{isChecked}")
+    public Result checkCart(@PathVariable("skuId") Long skuId,
+                            @PathVariable("isChecked") Integer isChecked) {
+        return cartInfoService.checkCart(skuId, isChecked);
+    }
+
+    // 2.全选
+    @GetMapping("/checkAllCart/{isChecked}")
+    public Result checkAllCart(@PathVariable("isChecked") Integer isChecked) {
+        return cartInfoService.checkAllCart(isChecked);
+    }
+
+    // 3.批量选中
+    @ApiOperation(value = "批量选择购物车")
+    @PostMapping("/batchCheckCart/{isChecked}")
+    public Result batchCheckCart(@RequestBody List<Long> skuIdList,
+                                 @PathVariable("isChecked") Integer isChecked) {
+        return cartInfoService.batchCheckCart(skuIdList, isChecked);
+    }
 }

@@ -26,4 +26,9 @@ public interface CartInfoService {
      */
     Result activityCartList();
 
+    Result checkCart(Long skuId, Integer isChecked);
+
+    Result checkAllCart(Integer isChecked);
+
+    Result batchCheckCart(List<Long> skuIdList, Integer isChecked);
 }

@@ -142,7 +142,7 @@ public class CartInfoServiceImpl implements CartInfoService {
         hashOperations.put(skuId.toString(), cartInfo);
 
         // 6.设置有效时间
-        redisTemplate.expire(cartKey, RedisConst.USER_CART_EXPIRE, TimeUnit.SECONDS);
+        this.setCartKeyExpire(cartKey);
 
 
         return Result.ok(null);
@@ -215,6 +215,69 @@ public class CartInfoServiceImpl implements CartInfoService {
         List<CartInfo> cartInfoList = (List<CartInfo>) this.cartList().getData();
         OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
         return Result.ok(orderConfirmVo);
+    }
+
+    @Override
+    public Result checkCart(Long skuId, Integer isChecked) {
+        Long userId = AuthContextHolder.getUserId();
+        String cartKey = getCartKey(userId);
+        // 获取field-value
+        BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = getCartBoundHashOperations();
+
+        // 根据field(skuId)获取value(CartInfo)
+        CartInfo cartInfo = cartBoundHashOperations.get(skuId.toString());
+        if (!Objects.isNull(cartInfo)) {
+            cartInfo.setIsChecked(isChecked);
+
+            cartBoundHashOperations.put(skuId.toString(), cartInfo);
+
+            // 设置key过期时间
+            this.setCartKeyExpire(cartKey);
+        }
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result checkAllCart(Integer isChecked) {
+        Long userId = AuthContextHolder.getUserId();
+        String cartKey = getCartKey(userId);
+        BoundHashOperations<String, String, CartInfo> boundHashOperations = getCartBoundHashOperations();
+        List<CartInfo> cartInfoList = boundHashOperations.values();
+        for (CartInfo cartInfo : cartInfoList) {
+            if (!Objects.isNull(cartInfo)) {
+                cartInfo.setIsChecked(isChecked);
+                boundHashOperations.put(cartInfo.getSkuId().toString(), cartInfo);
+            }
+        }
+        // 设置过期时间
+        this.setCartKeyExpire(cartKey);
+        return Result.ok(null);
+    }
+
+    @Override
+    public Result batchCheckCart(List<Long> skuIdList, Integer isChecked) {
+        Long userId = AuthContextHolder.getUserId();
+        String cartKey = getCartKey(userId);
+        // 获取field-value
+        BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = getCartBoundHashOperations();
+
+        for (Long skuId : skuIdList) {
+            CartInfo cartInfo = cartBoundHashOperations.get(skuId.toString());
+            if (!Objects.isNull(cartInfo)) {
+                cartInfo.setIsChecked(isChecked);
+
+                cartBoundHashOperations.put(skuId.toString(), cartInfo);
+            }
+        }
+        // 设置key过期时间
+        this.setCartKeyExpire(cartKey);
+        return Result.ok(null);
+    }
+
+
+    // 设置key 过期时间
+    private void setCartKeyExpire(String key) {
+        redisTemplate.expire(key, RedisConst.USER_CART_EXPIRE, TimeUnit.SECONDS);
     }
 
 }
