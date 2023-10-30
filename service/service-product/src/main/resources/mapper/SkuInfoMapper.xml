@@ -56,4 +56,33 @@
         set is_new_person = #{status}
         where id = #{id};
     </update>
+    <!--TODO 这里需要考虑是否多减了-->
+    <update id="unlockStock">
+        update sku_info
+        set lock_stock = lock_stock - #{lock_stock}
+        where id = #{skuId}
+    </update>
+    <!--行锁-->
+    <select id="checkStock" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from sku_info
+        <where>
+            <choose>
+                <when test="skuId != null and skuNum != null">
+                    id = #{skuId}
+                    and stock-lock_stock > #{skuNum} for update
+                </when>
+                <otherwise>
+                    1 = -1
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+    <!--TODO 这里需要考虑是否多加了-->
+    <update id="lockStock">
+        update sku_info
+        set lock_stock = lock_stock + #{lock_stock}
+        where id = #{skuId}
+    </update>
 </mapper>

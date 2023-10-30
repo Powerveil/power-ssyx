@@ -274,6 +274,20 @@ public class CartInfoServiceImpl implements CartInfoService {
         return Result.ok(null);
     }
 
+    // 获取当前用户购物车选中购物项
+    @Override
+    public List<CartInfo> getCartCheckedList(Long userId) {
+        String cartKey = getCartKey(userId);
+        // 获取field-value
+        BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = redisTemplate.boundHashOps(cartKey);
+
+        List<CartInfo> cartInfoList = cartBoundHashOperations.values();
+        cartInfoList = cartInfoList.stream()
+                .filter(item -> item.getIsChecked().equals(1))
+                .collect(Collectors.toList());
+        return cartInfoList;
+    }
+
 
     // 设置key 过期时间
     private void setCartKeyExpire(String key) {

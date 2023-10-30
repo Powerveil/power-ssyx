@@ -19,6 +19,15 @@ public interface SkuInfoMapper extends BaseMapper<SkuInfo> {
     int publish(@Param("id") Long id, @Param("status") Integer status);
 
     int isNewPerson(@Param("id") Long id, @Param("status") Integer status);
+
+    // 解锁库存
+    void unlockStock(@Param("skuId") Long skuId, @Param("skuNum") Integer skuNum);
+
+    // 验证库存
+    SkuInfo checkStock(@Param("skuId") Long skuId, @Param("skuNum") Integer skuNum);
+
+    // 锁定库存:update
+    Integer lockStock(@Param("skuId") Long skuId, @Param("skuNum") Integer skuNum);
 }
 
 

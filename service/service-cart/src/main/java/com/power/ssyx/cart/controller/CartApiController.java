@@ -2,6 +2,7 @@ package com.power.ssyx.cart.controller;
 
 import com.power.ssyx.cart.service.CartInfoService;
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.order.CartInfo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -80,5 +81,19 @@ public class CartApiController {
     public Result batchCheckCart(@RequestBody List<Long> skuIdList,
                                  @PathVariable("isChecked") Integer isChecked) {
         return cartInfoService.batchCheckCart(skuIdList, isChecked);
+    }
+
+
+    // 获取当前用户购物车选中购物项
+
+    /**
+     * 根据用户Id 查询购物车列表
+     *
+     * @param userId
+     * @return
+     */
+    @GetMapping("/inner/getCartCheckedList/{userId}")
+    public List<CartInfo> getCartCheckedList(@PathVariable("userId") Long userId) {
+        return cartInfoService.getCartCheckedList(userId);
     }
 }

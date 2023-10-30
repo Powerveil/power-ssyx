@@ -5,6 +5,7 @@ import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.product.SkuInfo;
 import com.power.ssyx.vo.product.SkuInfoQueryVo;
 import com.power.ssyx.vo.product.SkuInfoVo;
+import com.power.ssyx.vo.product.SkuStockLockVo;
 
 import java.util.List;
 
@@ -47,4 +48,7 @@ public interface SkuInfoService extends IService<SkuInfo> {
     List<SkuInfo> findNewPersonSkuInfoList();
 
     SkuInfoVo getSkuInfoVo(Long skuId);
+
+    // 验证和锁定库存
+    Boolean checkAndLock(List<SkuStockLockVo> skuStockLockVoList, String orderNo);
 }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.power.ssyx.common.constant.RedisConst;
+import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.common.utils.BeanCopyUtils;
@@ -21,9 +23,13 @@ import com.power.ssyx.product.service.SkuInfoService;
 import com.power.ssyx.product.service.SkuPosterService;
 import com.power.ssyx.vo.product.SkuInfoQueryVo;
 import com.power.ssyx.vo.product.SkuInfoVo;
+import com.power.ssyx.vo.product.SkuStockLockVo;
 import io.jsonwebtoken.lang.Collections;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -59,6 +65,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 
     @Autowired
     private RabbitService rabbitService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
 //    @PostConstruct // TODO 待优化，暂时先这样，有点冗余，初步考虑用内部类，然后用单例模式获取（还没有执行这个想法）
 //    public void init() throws InterruptedException {
@@ -326,6 +338,72 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         skuInfoVo.setSkuPosterList(skuPosterList);
 
         return skuInfoVo;
+    }
+
+    // 验证和锁定库存
+    @Override
+    public Boolean checkAndLock(List<SkuStockLockVo> skuStockLockVoList, String orderNo) {
+        // 1.判断skuStockLockVoList集合是否为空
+        if (Collections.isEmpty(skuStockLockVoList)) {
+            throw new SsyxException(ResultCodeEnum.DATA_ERROR);
+        }
+
+        // 2.遍历skuStockLockVoList得到每个商品，验证库存并锁定库存，具备原子性
+        for (SkuStockLockVo skuStockLockVo : skuStockLockVoList) {
+            this.checkLock(skuStockLockVo);
+        }
+
+        // 3.只要有一个商品锁定失败，所有锁定成功的商品都解锁 TODO 以后有操作 休息sleep
+        boolean flag = skuStockLockVoList.stream()
+                .anyMatch(skuStockLockVo -> !skuStockLockVo.getIsLock());
+        if (flag) {
+            // 所有锁定成功的商品都解锁
+            skuStockLockVoList.stream().filter(SkuStockLockVo::getIsLock)
+                    .forEach(skuStockLockVo -> baseMapper.unlockStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum()));
+            // 返回失败状态
+            return false;
+        }
+
+        // 4.如果所有商品都锁定成功了，redis缓存相关数据，为了方便后面的解锁和减库存
+        redisTemplate.opsForValue()
+                .set(RedisConst.STOCK_INFO + orderNo, skuStockLockVoList);
+
+        return true;
+    }
+
+    private void checkLock(SkuStockLockVo skuStockLockVo) {
+
+        // 获取锁
+        // 公平锁
+        RLock rLock = this.redissonClient
+                .getFairLock(RedisConst.SKUKEY_PREFIX + skuStockLockVo.getSkuId());
+        // 加锁
+        rLock.lock();
+
+        try {
+            // 验证库存
+            SkuInfo skuInfo =
+                    baseMapper.checkStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum());
+            // 判断没有满足条件商品，设置isLock值false，返回
+            if (Objects.isNull(skuInfo)) {
+                skuStockLockVo.setIsLock(false);
+                return;
+            }
+            // 有满足条件商品
+            // 锁定库存:update
+            Integer rows = baseMapper.lockStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum());
+
+            if (rows == 1) {
+                // 解锁
+                skuStockLockVo.setIsLock(true);
+            } else {
+                skuStockLockVo.setIsLock(false);
+            }
+
+        } finally {
+            // 解锁
+            rLock.unlock();
+        }
     }
 
     @Override

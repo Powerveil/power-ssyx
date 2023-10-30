@@ -1,6 +1,7 @@
 package com.power.ssyx.cart.service;
 
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.order.CartInfo;
 
 import java.util.List;
 
@@ -31,4 +32,7 @@ public interface CartInfoService {
     Result checkAllCart(Integer isChecked);
 
     Result batchCheckCart(List<Long> skuIdList, Integer isChecked);
+
+    // 获取当前用户购物车选中购物项
+    List<CartInfo> getCartCheckedList(Long userId);
 }

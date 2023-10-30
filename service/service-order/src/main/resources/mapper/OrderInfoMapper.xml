@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.power.ssyx.order.mapper.OrderInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.power.ssyx.model.order.OrderInfo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="nickName" column="nick_name" jdbcType="VARCHAR"/>
+        <result property="orderNo" column="order_no" jdbcType="CHAR"/>
+        <result property="couponId" column="coupon_id" jdbcType="BIGINT"/>
+        <result property="totalAmount" column="total_amount" jdbcType="DECIMAL"/>
+        <result property="activityAmount" column="activity_amount" jdbcType="DECIMAL"/>
+        <result property="couponAmount" column="coupon_amount" jdbcType="DECIMAL"/>
+        <result property="originalTotalAmount" column="original_total_amount" jdbcType="DECIMAL"/>
+        <result property="feightFee" column="feight_fee" jdbcType="DECIMAL"/>
+        <result property="feightFeeReduce" column="feight_fee_reduce" jdbcType="DECIMAL"/>
+        <result property="refundableTime" column="refundable_time" jdbcType="TIMESTAMP"/>
+        <result property="payType" column="pay_type" jdbcType="TINYINT"/>
+        <result property="sourceType" column="source_type" jdbcType="TINYINT"/>
+        <result property="orderStatus" column="order_status" jdbcType="TINYINT"/>
+        <result property="processStatus" column="process_status" jdbcType="TINYINT"/>
+        <result property="leaderId" column="leader_id" jdbcType="BIGINT"/>
+        <result property="leaderName" column="leader_name" jdbcType="VARCHAR"/>
+        <result property="leaderPhone" column="leader_phone" jdbcType="VARCHAR"/>
+        <result property="takeName" column="take_name" jdbcType="VARCHAR"/>
+        <result property="receiverName" column="receiver_name" jdbcType="VARCHAR"/>
+        <result property="receiverPhone" column="receiver_phone" jdbcType="VARCHAR"/>
+        <result property="receiverPostCode" column="receiver_post_code" jdbcType="VARCHAR"/>
+        <result property="receiverProvince" column="receiver_province" jdbcType="BIGINT"/>
+        <result property="receiverCity" column="receiver_city" jdbcType="BIGINT"/>
+        <result property="receiverDistrict" column="receiver_district" jdbcType="BIGINT"/>
+        <result property="receiverAddress" column="receiver_address" jdbcType="VARCHAR"/>
+        <result property="paymentTime" column="payment_time" jdbcType="TIMESTAMP"/>
+        <result property="deliveryTime" column="delivery_time" jdbcType="TIMESTAMP"/>
+        <result property="takeTime" column="take_time" jdbcType="TIMESTAMP"/>
+        <result property="receiveTime" column="receive_time" jdbcType="TIMESTAMP"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="cancelTime" column="cancel_time" jdbcType="TIMESTAMP"/>
+        <result property="cancelReason" column="cancel_reason" jdbcType="VARCHAR"/>
+        <result property="wareId" column="ware_id" jdbcType="BIGINT"/>
+        <result property="commissionAmount" column="commission_amount" jdbcType="DECIMAL"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,user_id,nick_name,
+        order_no,coupon_id,total_amount,
+        activity_amount,coupon_amount,original_total_amount,
+        feight_fee,feight_fee_reduce,refundable_time,
+        pay_type,source_type,order_status,
+        process_status,leader_id,leader_name,
+        leader_phone,take_name,receiver_name,
+        receiver_phone,receiver_post_code,receiver_province,
+        receiver_city,receiver_district,receiver_address,
+        payment_time,delivery_time,take_time,
+        receive_time,remark,cancel_time,
+        cancel_reason,ware_id,commission_amount,
+        create_time,update_time,is_deleted
+    </sql>
+</mapper>
