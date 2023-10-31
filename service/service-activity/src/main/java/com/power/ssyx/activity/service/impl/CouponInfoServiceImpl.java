@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.activity.mapper.CouponInfoMapper;
+import com.power.ssyx.activity.mapper.CouponRangeMapper;
 import com.power.ssyx.activity.service.CouponInfoService;
 import com.power.ssyx.activity.service.CouponRangeService;
 import com.power.ssyx.client.product.ProductFeignClient;
@@ -46,6 +47,9 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
 
     @Autowired
     private CouponRangeService couponRangeService;
+
+    @Autowired
+    private CouponRangeMapper couponRangeMapper;
 
     private CouponInfoService couponInfoServiceProxy;
 
@@ -338,6 +342,28 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
             optimalCouponInfo.setIsOptimal(1);
         }
         return userAllCouponList;
+    }
+
+    // 获取购物车对应优惠卷
+    @Override
+    public CouponInfo findRangeSkuIdList(List<CartInfo> cartInfoList, Long couponId) {
+        // 根据优惠卷id基本信息查询
+        CouponInfo couponInfo = baseMapper.selectById(couponId);
+        if (Objects.isNull(couponInfo)) {
+            return null;
+        }
+        // 根据couponId查询对应CouponRange数据
+        List<CouponRange> couponRangeList = couponRangeMapper.selectList(
+                new LambdaQueryWrapper<CouponRange>().eq(CouponRange::getCouponId, couponId)
+        );
+
+        // 对应sku信息
+        Map<Long, List<Long>> couponIdToSkuIdMap = this.findCouponIdToSkuIdMap(cartInfoList, couponRangeList);
+        // 遍历map，得到value值，封装到couponInfo对象
+        // 只有一个优惠卷
+        List<Long> skuIsList = couponIdToSkuIdMap.entrySet().iterator().next().getValue();
+        couponInfo.setSkuIdList(skuIsList);
+        return couponInfo;
     }
 
     private BigDecimal computeTotalAmount(List<CartInfo> cartInfoList) {

@@ -1,6 +1,8 @@
 package com.power.ssyx.client.activity;
 
+import com.power.ssyx.model.activity.CouponInfo;
 import com.power.ssyx.model.order.CartInfo;
+import com.power.ssyx.vo.order.CartInfoVo;
 import com.power.ssyx.vo.order.OrderConfirmVo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -32,4 +34,14 @@ public interface ActivityFeignClient {
     @PostMapping("/api/activity/inner/findCartActivityAndCoupon/{userId}")
     OrderConfirmVo findCartActivityAndCoupon(@RequestBody List<CartInfo> cartInfoList,
                                              @PathVariable Long userId);
+
+    @ApiOperation(value = "获取购物车对应规则数据")
+    @GetMapping("/api/activity/inner/findCartActivityList")
+    List<CartInfoVo> findCartActivityList(@RequestBody List<CartInfo> cartInfoList);
+
+
+    @ApiOperation(value = "获取购物车对应优惠卷")
+    @GetMapping("/inner/findRangeSkuIdList/{couponId}")
+    public CouponInfo findRangeSkuIdList(@RequestBody List<CartInfo> cartInfoList,
+                                         @PathVariable("couponId") Long couponId);
 }
