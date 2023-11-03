@@ -28,4 +28,13 @@
         expire_time,create_time,update_time,
         is_deleted
     </sql>
+
+    <update id="updateCouponInfoUserStatus">
+        update coupon_use
+        set coupon_status = 2
+        where coupon_id = #{couponId}
+          and user_id = #{userId}
+          and order_id = #{orderId}
+          and is_deleted = 0
+    </update>
 </mapper>

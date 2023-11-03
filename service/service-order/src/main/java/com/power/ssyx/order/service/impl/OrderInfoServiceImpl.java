@@ -1,5 +1,6 @@
 package com.power.ssyx.order.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.client.activity.ActivityFeignClient;
 import com.power.ssyx.client.cart.CartFeignClient;
@@ -10,25 +11,30 @@ import com.power.ssyx.common.constant.RedisConst;
 import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
-import com.power.ssyx.enums.ActivityType;
-import com.power.ssyx.enums.CouponType;
-import com.power.ssyx.enums.SkuType;
+import com.power.ssyx.common.utils.DateUtil;
+import com.power.ssyx.enums.*;
 import com.power.ssyx.model.activity.ActivityRule;
 import com.power.ssyx.model.activity.CouponInfo;
 import com.power.ssyx.model.order.CartInfo;
 import com.power.ssyx.model.order.OrderInfo;
 import com.power.ssyx.model.order.OrderItem;
+import com.power.ssyx.mq.constant.MqConst;
+import com.power.ssyx.mq.service.RabbitService;
 import com.power.ssyx.order.mapper.OrderInfoMapper;
+import com.power.ssyx.order.mapper.OrderItemMapper;
 import com.power.ssyx.order.service.OrderInfoService;
+import com.power.ssyx.order.service.OrderItemService;
 import com.power.ssyx.vo.order.CartInfoVo;
 import com.power.ssyx.vo.order.OrderConfirmVo;
 import com.power.ssyx.vo.order.OrderSubmitVo;
 import com.power.ssyx.vo.product.SkuStockLockVo;
 import com.power.ssyx.vo.user.LeaderAddressVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -61,6 +67,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     @Autowired
     private ProductFeignClient productFeignClient;
+
+    @Autowired
+    private RabbitService rabbitService;
+
+    @Autowired
+    private OrderItemMapper orderItemMapper;
+
+    // 需要添加一层结构，现在问题逐渐显露
+    @Autowired
+    private OrderItemService orderItemService;
 
 
     @Override
@@ -146,58 +162,14 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // order_info order_item order_log
         Long orderId = this.saveOrder(orderParamVo, cartInfoList);
 
-        // 计算金额
-        // TODO 营销活动 和 优惠卷 金额
-        Map<String, BigDecimal> activitySplitAmount = this.computeActivitySplitAmount(cartInfoList);
-        // 优惠卷金额
-        Map<String, BigDecimal> couponInfoSplitAmount =
-                this.computeCouponInfoSplitAmount(cartInfoList, orderParamVo.getCouponId());
 
-        // 封装订单项数据
-        List<OrderItem> orderItemList = new ArrayList<>();
-        for (CartInfo cartInfo : cartInfoList) {
-            OrderItem orderItem = new OrderItem();
+        // 下单完成，删除购物车记录
+        rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
+                MqConst.ROUTING_DELETE_CART,
+                orderParamVo.getUserId());
 
-            orderItem.setId(null);
-            orderItem.setCategoryId(cartInfo.getCategoryId());
-            if (cartInfo.getSkuType() == SkuType.COMMON.getCode()) {
-                orderItem.setSkuType(SkuType.COMMON);
-            } else {
-                orderItem.setSkuType(SkuType.SECKILL);
-            }
-            orderItem.setSkuId(cartInfo.getSkuId());
-            orderItem.setSkuName(cartInfo.getSkuName());
-            orderItem.setSkuPrice(cartInfo.getCartPrice());
-            orderItem.setImgUrl(cartInfo.getImgUrl());
-            orderItem.setSkuNum(cartInfo.getSkuNum());
-            orderItem.setLeaderId(orderParamVo.getLeaderId());
-
-            // 营销活动金额
-            BigDecimal activityAmount = activitySplitAmount.get("activity:" + orderItem.getSkuId());
-            if (Objects.isNull(activityAmount)) {
-                activityAmount = new BigDecimal(0);
-            }
-            orderItem.setSplitActivityAmount(activityAmount);
-            // 优惠卷金额
-            BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:" + orderItem.getSkuId());
-            if (Objects.isNull(couponAmount)) {
-                couponAmount = new BigDecimal(0);
-            }
-            orderItem.setSplitCouponAmount(couponAmount);
-            // 总金额
-            BigDecimal skuTotalAmount = orderItem.getSkuPrice().multiply(new BigDecimal(orderItem.getSkuNum()));
-
-            // 优惠之后的金额
-            BigDecimal splitTotalAmount = skuTotalAmount.subtract(activityAmount).subtract(couponAmount);
-
-            orderItem.setSplitTotalAmount(splitTotalAmount);
-
-            orderItemList.add(orderItem);
-        }
-
-        // 返回订单id
-
-        return null;
+        // 第五步 返回订单id
+        return Result.ok(orderId);
     }
 
 
@@ -342,7 +314,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return couponInfoSplitAmountMap;
     }
 
-    private Long saveOrder(OrderSubmitVo orderParamVo, List<CartInfo> cartInfoList) {
+    @Transactional(rollbackFor = {Exception.class})
+    public Long saveOrder(OrderSubmitVo orderParamVo, List<CartInfo> cartInfoList) {
         if (CollectionUtils.isEmpty(cartInfoList)) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
         }
@@ -353,12 +326,145 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         if (Objects.isNull(leaderAddressVo)) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
         }
-        return null;
+
+        // 计算金额
+        // TODO 营销活动 和 优惠卷 金额
+        Map<String, BigDecimal> activitySplitAmount = this.computeActivitySplitAmount(cartInfoList);
+        // 优惠卷金额
+        // orderParamVo是带有的couponId
+        Map<String, BigDecimal> couponInfoSplitAmount =
+                this.computeCouponInfoSplitAmount(cartInfoList, orderParamVo.getCouponId());
+
+        // 封装订单项数据
+        List<OrderItem> orderItemList = new ArrayList<>();
+        for (CartInfo cartInfo : cartInfoList) {
+            OrderItem orderItem = new OrderItem();
+
+            orderItem.setId(null);
+            orderItem.setCategoryId(cartInfo.getCategoryId());
+            if (cartInfo.getSkuType() == SkuType.COMMON.getCode()) {
+                orderItem.setSkuType(SkuType.COMMON);
+            } else {
+                orderItem.setSkuType(SkuType.SECKILL);
+            }
+            orderItem.setSkuId(cartInfo.getSkuId());
+            orderItem.setSkuName(cartInfo.getSkuName());
+            orderItem.setSkuPrice(cartInfo.getCartPrice());
+            orderItem.setImgUrl(cartInfo.getImgUrl());
+            orderItem.setSkuNum(cartInfo.getSkuNum());
+            orderItem.setLeaderId(orderParamVo.getLeaderId());
+
+            // 营销活动金额
+            BigDecimal activityAmount = activitySplitAmount.get("activity:" + orderItem.getSkuId());
+            if (Objects.isNull(activityAmount)) {
+                activityAmount = new BigDecimal(0);
+            }
+            orderItem.setSplitActivityAmount(activityAmount);
+            // 优惠卷金额
+            BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:" + orderItem.getSkuId());
+            if (Objects.isNull(couponAmount)) {
+                couponAmount = new BigDecimal(0);
+            }
+            orderItem.setSplitCouponAmount(couponAmount);
+            // 总金额
+            BigDecimal skuTotalAmount = orderItem.getSkuPrice().multiply(new BigDecimal(orderItem.getSkuNum()));
+
+            // 优惠之后的金额
+            BigDecimal splitTotalAmount = skuTotalAmount.subtract(activityAmount).subtract(couponAmount);
+
+            orderItem.setSplitTotalAmount(splitTotalAmount);
+
+            orderItemList.add(orderItem);
+        }
+
+        // 封装订单OrderInfo数据
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setUserId(userId); // 用户id
+        orderInfo.setOrderNo(orderParamVo.getOrderNo()); // 订单号 唯一标识
+        orderInfo.setOrderStatus(OrderStatus.UNPAID); // 订单状态，生成成功未支付
+        orderInfo.setProcessStatus(ProcessStatus.UNPAID);
+        orderInfo.setLeaderId(orderParamVo.getLeaderId()); // 团长id
+        orderInfo.setLeaderName(leaderAddressVo.getLeaderName()); // 团长名称
+
+        orderInfo.setLeaderPhone(leaderAddressVo.getLeaderPhone());
+        orderInfo.setTakeName(leaderAddressVo.getTakeName());
+        orderInfo.setReceiverName(orderParamVo.getReceiverName());
+        orderInfo.setReceiverPhone(orderParamVo.getReceiverPhone());
+        orderInfo.setReceiverProvince(leaderAddressVo.getProvince());
+        orderInfo.setReceiverCity(leaderAddressVo.getCity());
+        orderInfo.setReceiverDistrict(leaderAddressVo.getDistrict());
+        orderInfo.setReceiverAddress(leaderAddressVo.getDetailAddress());
+        orderInfo.setWareId(cartInfoList.get(0).getWareId());
+
+        orderInfo.setCouponId(orderParamVo.getCouponId());
+
+
+        //计算订单金额
+        BigDecimal originalTotalAmount = this.computeTotalAmount(cartInfoList);
+        BigDecimal activityAmount = activitySplitAmount.get("activity:total");
+        if (null == activityAmount) activityAmount = new BigDecimal(0);
+        BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:total");
+        if (null == couponAmount) couponAmount = new BigDecimal(0);
+        BigDecimal totalAmount = originalTotalAmount.subtract(activityAmount).subtract(couponAmount);
+        //计算订单金额
+        orderInfo.setOriginalTotalAmount(originalTotalAmount);
+        orderInfo.setActivityAmount(activityAmount);
+        orderInfo.setCouponAmount(couponAmount);
+        orderInfo.setTotalAmount(totalAmount);
+
+        //计算团长佣金
+        BigDecimal profitRate = new BigDecimal(0); //orderSetService.getProfitRate();
+        BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
+        orderInfo.setCommissionAmount(commissionAmount);
+
+        // 添加数据到订单基本信息表
+        // order_info order_item TODO order_log暂时没有添加
+        baseMapper.insert(orderInfo);
+
+        // 保存
+        for (OrderItem orderItem : orderItemList) {
+            orderItem.setOrderId(orderInfo.getId());
+        }
+        orderItemService.saveBatch(orderItemList);
+
+
+        // 如果当前订单使用优惠卷，更新优惠卷状态
+        if (!Objects.isNull(orderInfo.getCouponId())) {
+            // 这个订单id是自增的(orderId)，不是那个orderNo
+            activityFeignClient.updateCouponInfoUserStatus(orderInfo.getCouponId(), userId, orderInfo.getId());
+        }
+
+        // 下单成功，记录用户购物商品数量，redis
+        String orderSkuKey = RedisConst.ORDER_SKU_MAP + orderParamVo.getUserId();
+        BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
+        cartInfoList.forEach(cartInfo -> {
+            if (hashOperations.hasKey(cartInfo.getSkuId().toString())) {
+                Integer orderSkuNum = hashOperations.get(cartInfo.getSkuId().toString()) + cartInfo.getSkuNum();
+                hashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
+            }
+        });
+        redisTemplate.expire(orderSkuKey, DateUtil.getCurrentExpireTimes(), TimeUnit.SECONDS);
+
+        // 返回订单id
+
+        return orderInfo.getId();
     }
 
     @Override
     public Result getOrderInfoById(Long orderId) {
-        return null;
+
+        // 根据orderId查询订单基本信息
+        OrderInfo orderInfo = baseMapper.selectById(orderId);
+
+        // 根据orderId查询订单所有订单项list列表
+        LambdaQueryWrapper<OrderItem> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderItem::getOrderId, orderId);
+        List<OrderItem> orderItemList = orderItemMapper.selectList(queryWrapper);
+
+        // 查询所有订单项封装到每个对象里面
+        orderInfo.setOrderItemList(orderItemList);
+
+        return Result.ok(orderInfo);
     }
 
 

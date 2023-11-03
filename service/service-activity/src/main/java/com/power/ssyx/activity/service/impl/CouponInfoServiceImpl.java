@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.activity.mapper.CouponInfoMapper;
 import com.power.ssyx.activity.mapper.CouponRangeMapper;
+import com.power.ssyx.activity.mapper.CouponUseMapper;
 import com.power.ssyx.activity.service.CouponInfoService;
 import com.power.ssyx.activity.service.CouponRangeService;
 import com.power.ssyx.client.product.ProductFeignClient;
@@ -52,6 +53,9 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
     private CouponRangeMapper couponRangeMapper;
 
     private CouponInfoService couponInfoServiceProxy;
+
+    @Autowired
+    private CouponUseMapper couponUseMapper;
 
 
     @Override
@@ -364,6 +368,14 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         List<Long> skuIsList = couponIdToSkuIdMap.entrySet().iterator().next().getValue();
         couponInfo.setSkuIdList(skuIsList);
         return couponInfo;
+    }
+
+    // 更新优惠卷使用状态
+    @Override
+    public Boolean updateCouponInfoUserStatus(Long couponId, Long userId, Long orderId) {
+        int count = couponUseMapper.updateCouponInfoUserStatus(couponId, userId, orderId);
+
+        return count > 0;
     }
 
     private BigDecimal computeTotalAmount(List<CartInfo> cartInfoList) {

@@ -45,7 +45,7 @@ public class CartInfo extends BaseEntity {
     @ApiModelProperty(value = "图片文件")
     private String imgUrl;
 
-    @ApiModelProperty(value = "isChecked")
+    @ApiModelProperty(value = "isChecked 1:选中 0:未选中")
     // 被选中
     private Integer isChecked;
 

@@ -11,6 +11,11 @@ feign:
 spring:
   main:
     allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
+  rabbitmq:
+    host: 192.168.18.129
+    port: 5672
+    username: guest
+    password: guest
   redis:
     host: localhost
     port: 6379

@@ -35,4 +35,7 @@ public interface CartInfoService {
 
     // 获取当前用户购物车选中购物项
     List<CartInfo> getCartCheckedList(Long userId);
+
+    // 根据userId删除选中购物车记录
+    Boolean deleteCartChecked(Long userId);
 }

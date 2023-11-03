@@ -3,6 +3,7 @@ package com.power.ssyx.activity.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.activity.CouponUse;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @author power
@@ -13,6 +14,9 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CouponUseMapper extends BaseMapper<CouponUse> {
 
+    int updateCouponInfoUserStatus(@Param("couponId") Long couponId,
+                                   @Param("userId") Long userId,
+                                   @Param("orderId") Long orderId);
 }
 
 
