@@ -381,7 +381,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 //        }
 
         // 老师的方法，根绝所有活动id查出所有规则，然后在根绝活动id进行分组
-        if (!Objects.isNull(activityIdList)) {
+        if (!CollectionUtils.isEmpty(activityIdList)) {
             LambdaQueryWrapper<ActivityRule> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(ActivityRule::getConditionAmount, ActivityRule::getConditionNum);
             queryWrapper.in(ActivityRule::getActivityId, activityIdList);

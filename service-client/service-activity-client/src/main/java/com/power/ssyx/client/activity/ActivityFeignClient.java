@@ -36,17 +36,17 @@ public interface ActivityFeignClient {
                                              @PathVariable Long userId);
 
     @ApiOperation(value = "获取购物车对应规则数据")
-    @GetMapping("/api/activity/inner/findCartActivityList")
+    @PostMapping("/api/activity/inner/findCartActivityList")
     List<CartInfoVo> findCartActivityList(@RequestBody List<CartInfo> cartInfoList);
 
 
     @ApiOperation(value = "获取购物车对应优惠卷")
-    @GetMapping("/inner/findRangeSkuIdList/{couponId}")
+    @PostMapping("/api/activity/inner/findRangeSkuIdList/{couponId}")
     public CouponInfo findRangeSkuIdList(@RequestBody List<CartInfo> cartInfoList,
                                          @PathVariable("couponId") Long couponId);
 
     @ApiOperation(value = "更新优惠卷使用状态")
-    @GetMapping("/inner/updateCouponInfoUserStatus/{couponId}/{userId}/{orderId}")
+    @GetMapping("/api/activity/inner/updateCouponInfoUserStatus/{couponId}/{userId}/{orderId}")
     public Boolean updateCouponInfoUserStatus(@PathVariable("couponId") Long couponId,
                                               @PathVariable("userId") Long userId,
                                               @PathVariable("orderId") Long orderId);

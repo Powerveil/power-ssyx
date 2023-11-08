@@ -59,7 +59,7 @@
     <!--TODO 这里需要考虑是否多减了-->
     <update id="unlockStock">
         update sku_info
-        set lock_stock = lock_stock - #{lock_stock}
+        set lock_stock = lock_stock - #{skuNum}
         where id = #{skuId}
     </update>
     <!--行锁-->
@@ -82,7 +82,7 @@
     <!--TODO 这里需要考虑是否多加了-->
     <update id="lockStock">
         update sku_info
-        set lock_stock = lock_stock + #{lock_stock}
+        set lock_stock = lock_stock + #{skuNum}
         where id = #{skuId}
     </update>
 </mapper>

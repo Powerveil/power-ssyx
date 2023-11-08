@@ -166,7 +166,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // 下单完成，删除购物车记录
         rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
                 MqConst.ROUTING_DELETE_CART,
-                orderParamVo.getUserId());
+                userId);
 
         // 第五步 返回订单id
         return Result.ok(orderId);

@@ -87,4 +87,8 @@ public class SkuInfo extends BaseEntity {
     @ApiModelProperty(value = "仓库")
     @TableField("ware_id")
     private Long wareId;
+
+    @ApiModelProperty(value = "版本")
+    @TableField("version")
+    private Long version;
 }
