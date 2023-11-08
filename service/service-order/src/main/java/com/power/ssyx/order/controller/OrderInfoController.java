@@ -1,6 +1,7 @@
 package com.power.ssyx.order.controller;
 
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.order.OrderInfo;
 import com.power.ssyx.order.service.OrderInfoService;
 import com.power.ssyx.vo.order.OrderSubmitVo;
 import io.swagger.annotations.ApiOperation;
@@ -37,5 +38,11 @@ public class OrderInfoController {
     @GetMapping("/auth/getOrderInfoById/{orderId}")
     public Result getOrderInfoById(@PathVariable("orderId") Long orderId) {
         return orderInfoService.getOrderInfoById(orderId);
+    }
+
+    // 根据orderNo查询订单信息
+    @GetMapping("/inner/getOrderInfo/{orderNo}")
+    public OrderInfo getOrderInfo(@PathVariable("orderNo") String orderNo) {
+        return orderInfoService.getOrderInfoByOrderNo(orderNo);
     }
 }
