@@ -50,4 +50,7 @@ public class SystemConstants {
     public static final Integer USER_DELIVERY_IS_DEFAULT = 1;
 
 
+    public static final String PAYMENT_SUCCESS = "SUCCESS";
+
+
 }

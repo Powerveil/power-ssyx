@@ -475,6 +475,31 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return orderInfo;
     }
 
+    // 订单支付成功，更新订单状态，扣减库存
+    @Override
+    public void orderPay(String orderNo) {
+        // 查询订单状态是否已经修改完成了支付状态
+        OrderInfo orderInfo = this.getOrderInfoByOrderNo(orderNo);
+        if (Objects.isNull(orderInfo) || orderInfo.getOrderStatus().equals(OrderStatus.UNPAID)) {
+            return;
+        }
+        // 更新状态
+        this.updateOrderStatus(orderInfo.getId());
+
+        // 扣减库存
+        rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
+                MqConst.ROUTING_MINUS_STOCK,
+                orderNo);
+    }
+
+    // 更新状态
+    private void updateOrderStatus(Long id) {
+        OrderInfo orderInfo = this.getOne(new LambdaQueryWrapper<OrderInfo>().eq(OrderInfo::getId, id));
+        orderInfo.setOrderStatus(OrderStatus.WAITING_DELIVER);
+        orderInfo.setProcessStatus(ProcessStatus.WAITING_DELIVER);
+        this.updateById(orderInfo);
+    }
+
 
 }
 

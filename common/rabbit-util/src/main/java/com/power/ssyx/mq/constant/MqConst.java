@@ -34,6 +34,7 @@ public class MqConst {
     //订单
     public static final String EXCHANGE_ORDER_DIRECT = "ssyx.order.direct";
     public static final String ROUTING_ROLLBACK_STOCK = "ssyx.rollback.stock";
+    // 减库存
     public static final String ROUTING_MINUS_STOCK = "ssyx.minus.stock";
 
     public static final String ROUTING_DELETE_CART = "ssyx.delete.cart";

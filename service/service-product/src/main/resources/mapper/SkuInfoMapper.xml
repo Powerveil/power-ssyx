@@ -41,22 +41,26 @@
         ware_id,version,create_time,
         update_time,is_deleted
     </sql>
+    <!--更新审核状态-->
     <update id="check">
         update sku_info
         set check_status = #{status}
         where id = #{id};
     </update>
+    <!--更新上下架状态-->
     <update id="publish">
         update sku_info
         set publish_status = #{status}
         where id = #{id};
     </update>
+    <!--更新用户是否是新人-->
     <update id="isNewPerson">
         update sku_info
         set is_new_person = #{status}
         where id = #{id};
     </update>
     <!--TODO 这里需要考虑是否多减了-->
+    <!--解锁库存-->
     <update id="unlockStock">
         update sku_info
         set lock_stock = lock_stock - #{skuNum}
@@ -80,9 +84,18 @@
         </where>
     </select>
     <!--TODO 这里需要考虑是否多加了-->
+    <!--锁定库存-->
     <update id="lockStock">
         update sku_info
         set lock_stock = lock_stock + #{skuNum}
+        where id = #{skuId}
+    </update>
+    <!--减库存-->
+    <update id="minusStock">
+        update sku_info
+        set stock      = stock - #{skuNum},
+            lock_stock = lock_stock - #{skuNum},
+            sale       = sale + #{skuNum}
         where id = #{skuId}
     </update>
 </mapper>

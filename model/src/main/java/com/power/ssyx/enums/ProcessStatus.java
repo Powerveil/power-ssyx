@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 public enum ProcessStatus {
     UNPAID(1, OrderStatus.UNPAID),
-    WAITING_DELEVER(2, OrderStatus.WAITING_DELEVER),
+    WAITING_DELIVER(2, OrderStatus.WAITING_DELIVER),
     WAITING_LEADER_TAKE(3, OrderStatus.WAITING_TAKE),
     WAITING_USER_TAKE(4, OrderStatus.WAITING_TAKE),
     WAITING_COMMON(5, OrderStatus.WAITING_COMMON),

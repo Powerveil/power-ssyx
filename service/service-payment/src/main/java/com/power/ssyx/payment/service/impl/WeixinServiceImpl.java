@@ -40,7 +40,7 @@ public class WeixinServiceImpl implements WeixinService {
         // 1.想payment_info支付记录表添加记录，目前支付状态，正在支付中
         PaymentInfo paymentInfo = paymentInfoService.getPaymentInfoByOrderNo(orderNo);
 
-        if (!Objects.isNull(paymentInfo)) {
+        if (Objects.isNull(paymentInfo)) {
             paymentInfo = paymentInfoService.savePaymentInfo(orderNo);
         }
 
@@ -102,6 +102,31 @@ public class WeixinServiceImpl implements WeixinService {
 
             // 6.返回结果
             return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // 查询订单支付状态
+    @Override
+    public Map<String, String> queryPayStatus(String orderNo) {
+        // 1.封装参数
+        Map<String, String> paramMap = new HashMap();
+        paramMap.put("appid", ConstantPropertiesUtils.APPID);
+        paramMap.put("mch_id", ConstantPropertiesUtils.PARTNER);
+        paramMap.put("out_trade_no", orderNo);
+        paramMap.put("nonce_str", WXPayUtil.generateNonceStr());
+        try {
+            //2、设置请求
+            HttpClient client = new HttpClient("https://api.mch.weixin.qq.com/pay/orderquery");
+            client.setXmlParam(WXPayUtil.generateSignedXml(paramMap, ConstantPropertiesUtils.PARTNERKEY));
+            client.setHttps(true);
+            client.post();
+            // 3.得到返回结果
+            String xmlContent = client.getContent();
+            Map<String, String> stringMap = WXPayUtil.xmlToMap(xmlContent);
+
+            return stringMap;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
