@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.order.OrderInfo;
 import com.power.ssyx.vo.order.OrderSubmitVo;
+import com.power.ssyx.vo.order.OrderUserQueryVo;
 
 /**
  * @author power
@@ -26,4 +27,7 @@ public interface OrderInfoService extends IService<OrderInfo> {
 
     // 订单支付成功，更新订单状态，扣减库存
     void orderPay(String orderNo);
+
+    // 获取用户订单分页列表
+    Result findUserOrderPage(Long page, Long limit, OrderUserQueryVo orderUserQueryVo);
 }

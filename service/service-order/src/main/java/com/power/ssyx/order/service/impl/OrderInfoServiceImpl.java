@@ -1,6 +1,8 @@
 package com.power.ssyx.order.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.client.activity.ActivityFeignClient;
 import com.power.ssyx.client.cart.CartFeignClient;
@@ -27,6 +29,7 @@ import com.power.ssyx.order.service.OrderItemService;
 import com.power.ssyx.vo.order.CartInfoVo;
 import com.power.ssyx.vo.order.OrderConfirmVo;
 import com.power.ssyx.vo.order.OrderSubmitVo;
+import com.power.ssyx.vo.order.OrderUserQueryVo;
 import com.power.ssyx.vo.product.SkuStockLockVo;
 import com.power.ssyx.vo.user.LeaderAddressVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -490,6 +493,40 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
                 MqConst.ROUTING_MINUS_STOCK,
                 orderNo);
+    }
+
+    @Override
+    public Result findUserOrderPage(Long page, Long limit, OrderUserQueryVo orderUserQueryVo) {
+        // 获取userId
+        Long userId = AuthContextHolder.getUserId();
+        orderUserQueryVo.setUserId(userId);
+
+        Page<OrderInfo> pageParam = new Page<>(page, limit);
+        IPage<OrderInfo> pageModel = this.getOrderInfoByUserIdPage(pageParam, orderUserQueryVo);
+        return Result.ok(pageModel);
+    }
+
+    // 条件分页查询
+    private IPage<OrderInfo> getOrderInfoByUserIdPage(Page<OrderInfo> pageParam, OrderUserQueryVo orderUserQueryVo) {
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        // 用户id
+        queryWrapper.eq(OrderInfo::getUserId, orderUserQueryVo.getUserId());
+        // 订单状态
+        queryWrapper.eq(OrderInfo::getOrderStatus, orderUserQueryVo.getOrderStatus());
+        Page<OrderInfo> pageModel = baseMapper.selectPage(pageParam, queryWrapper);
+        // 获取每个订单，把每个订单里面订单项查询封装
+        List<OrderInfo> orderInfoList = pageModel.getRecords();
+        for (OrderInfo orderInfo : orderInfoList) {
+            // 根据订单id查询里面所有订单项列表
+            List<OrderItem> orderItemList = orderItemMapper.selectList(
+                    new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderInfo.getId())
+            );
+            // 把订单项集合封装到每个订单里面
+            orderInfo.setOrderItemList(orderItemList);
+            // 封装订单状态名称（为了前端取数据方便）
+            orderInfo.getParam().put("orderStatusName", orderInfo.getOrderStatus().getComment());
+        }
+        return pageModel;
     }
 
     // 更新状态
