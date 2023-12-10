@@ -1,11 +1,11 @@
 spring:
   application:
-    name: server-gateway
+    name: service-gateway
   profiles:
     active: dev
   cloud:
     nacos:
       discovery:
-        server-addr: localhost:8848
-      username: nacos
-      password: nacos
+        server-addr: 192.168.18.129:8848
+      username:
+      password:

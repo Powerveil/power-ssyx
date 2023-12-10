@@ -2,10 +2,10 @@ spring:
   application:
     name: service-home
   profiles:
-    active: dev
+    active: prod
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
-      username: nacos
-      password: nacos
+        server-addr: 192.168.18.129:8848
+      username:
+      password:
