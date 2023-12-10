@@ -392,6 +392,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 
         // 获取锁
         // 公平锁
+        // 是防止两台JVM机器都来加锁（普通加锁只会在当前JVM机器上生效）
         RLock rLock = this.redissonClient
                 .getFairLock(RedisConst.SKUKEY_PREFIX + skuStockLockVo.getSkuId());
         // 加锁
@@ -411,7 +412,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             Integer rows = baseMapper.lockStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum());
 
             if (rows == 1) {
-                // 解锁
+                // 锁定成功
                 skuStockLockVo.setIsLock(true);
             } else {
                 skuStockLockVo.setIsLock(false);

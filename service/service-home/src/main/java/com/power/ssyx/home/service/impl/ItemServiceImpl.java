@@ -46,6 +46,7 @@ public class ItemServiceImpl implements ItemService {
             // 远程调用该获取sku数据
             SkuInfoVo skuInfoVo = productFeignClient.getSkuInfoVo(skuId);
             map.put("skuInfoVo", skuInfoVo);
+            // 相当于复习，这里完全可以使用 runAsync方法
             return skuInfoVo;
         }, threadPoolExecutor);
 
