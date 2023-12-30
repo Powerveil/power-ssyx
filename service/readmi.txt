@@ -1,0 +1,13 @@
+parent：系统微服务模块。
+
+children：
+- service-acl：权限管理模块。
+- service-activity：活动和优惠卷管理模块。
+- service-cart：购物车模块。
+- service-home：首页模块。
+- service-order：订单模块。
+- service-payment：支付模块。
+- service-product：商品信息管理模块。
+- service-search：ElasticSearch操作模块。
+- service-sys：区域管理模块
+- service-user：用户登录模块

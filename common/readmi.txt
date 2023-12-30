@@ -1,0 +1,6 @@
+parent：公共类父模块。存放一些公共部分
+
+children：
+- common-util：核心工具类。公共配置类、工具类
+- service-util：service模块工具类。业务模块相关工具类、配置类
+- rabbit-util：RabbitMQ工具类。关于MQ的工具类、配置类和常量

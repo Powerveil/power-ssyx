@@ -1,0 +1,8 @@
+parent：父工程，根目录，管理子模块。
+
+children：
+- common：公共类父模块。
+- model：实体类模块。
+- service：系统微服务模块。
+- service-client：系统远程调用封装模块。
+- service-gateway：网关模块。

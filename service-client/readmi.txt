@@ -1,0 +1,9 @@
+parent：系统远程调用封装模块。
+
+children：
+- service-activity-client：活动和优惠卷管理模块远程接口。
+- service-cart-client：购物车模块远程接口。
+- service-order-client：订单模块远程接口。
+- service-product-client：商品信息管理模块远程接口。
+- service-search-client：ElasticSearch操作模块远程接口。
+- service-user-client：用户登录模块远程接口。
