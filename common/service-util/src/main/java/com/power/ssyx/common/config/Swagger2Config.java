@@ -46,6 +46,7 @@ public class Swagger2Config {
                 .select()
                 //只显示api路径下的页面
                 .apis(RequestHandlerSelectors.basePackage("com.power.ssyx"))
+                // 显示的接口路径
                 .paths(PathSelectors.regex("/api/.*"))
                 .build()
                 .globalOperationParameters(pars);
@@ -71,6 +72,7 @@ public class Swagger2Config {
                 .select()
                 //只显示admin路径下的页面
                 .apis(RequestHandlerSelectors.basePackage("com.power.ssyx"))
+                // 显示的接口路径
                 .paths(PathSelectors.regex("/admin/.*"))
                 .build()
                 .globalOperationParameters(pars);

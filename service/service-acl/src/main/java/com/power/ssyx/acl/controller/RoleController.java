@@ -37,7 +37,7 @@ public class RoleController {
     //2.根据id查询角色
     @ApiOperation("根据id查询角色")
     @GetMapping("/get/{id}")
-    public Result get(@PathVariable(name = "id") Integer id) {
+    public Result get(@PathVariable(name = "id") Long id) {
         return roleService.get(id);
     }
 
@@ -58,7 +58,7 @@ public class RoleController {
     //5.根据id删除角色
     @ApiOperation("根据id删除角色")
     @DeleteMapping("/remove/{id}")
-    public Result deleteRoleById(@PathVariable(name = "id") Integer id) {
+    public Result deleteRoleById(@PathVariable(name = "id") Long id) {
         return roleService.deleteRoleById(id);
     }
 

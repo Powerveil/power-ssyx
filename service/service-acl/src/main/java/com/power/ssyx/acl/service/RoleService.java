@@ -19,17 +19,17 @@ public interface RoleService extends IService<Role> {
 
     IPage<Role> selectRolePage(Page<Role> pageParam, RoleQueryVo roleQueryVo);
 
-    Result get(Integer id);
+    Result get(Long id);
 
     Result saveRole(Role role);
 
     Result updateRoleById(Role role);
 
-    Result deleteRoleById(Integer id);
+    Result deleteRoleById(Long id);
 
     Result deleteRoleByIds(List<Long> ids);
 
-    Map<String, Object> getRoleByAdminId(Integer adminId);
+    Map<String, Object> getRoleByAdminId(Long adminId);
 
     //为用户进行角色分配
     Result saveAdminRole(Long adminId, Long[] roleId);

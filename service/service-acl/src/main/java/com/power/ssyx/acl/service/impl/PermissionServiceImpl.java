@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.PermissionMapper;
 import com.power.ssyx.acl.service.PermissionService;
 import com.power.ssyx.acl.service.RolePermissionService;
+import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.common.utils.ParamCheckUtils;
 import com.power.ssyx.model.acl.Permission;
 import com.power.ssyx.model.acl.RolePermission;
 import com.power.ssyx.model.base.BaseEntity;
@@ -49,6 +52,13 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return Result.ok(trees);
     }
 
+    /**
+     * 将当前权限及其子权限添加到 trees 列表中。
+     *
+     * @param permission 当前权限对象
+     * @param list       完整的权限列表
+     * @return
+     */
     private Permission findChildren(Permission permission, List<Permission> list) {
         permission.setChildren(new ArrayList<>());
         for (Permission temp : list) {
@@ -84,10 +94,16 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return Result.ok(null);
     }
 
+    /**
+     * 通过递归方式获取给定权限及其所有子权限的 ID，并将它们存储在一个列表中。然后，批量删除这些权限记录。
+     * @param id
+     * @return 要删除的权限的 id
+     */
     @Override
     public Result removePermission(Long id) {
 //        deleteById(id);
         List<Long> ids = new ArrayList<>();
+        // 获取所有子权限的 ID
         getAllChildrenPermission(id, ids);
 
         ids.add(id);
@@ -99,6 +115,9 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     // TODO
     @Override
     public Result doAssign(Long roleId, Long[] permissionId) {
+        if (ParamCheckUtils.validateParams(roleId, permissionId)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
         List<RolePermission> allPermissions = rolePermissionService.list();
         LambdaQueryWrapper<RolePermission> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(RolePermission::getRoleId, roleId);
@@ -115,8 +134,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     // TODO
     @Override
     public Result toAssign(Long roleId) {
-
-
         Map<String, Object> map = new HashMap<>();
         map.put("allPermissions", new Permission());
         return Result.ok(map);
@@ -144,6 +161,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .map(BaseEntity::getId)
                 .collect(Collectors.toList());
         for (Long temp : list) {
+            // 递归调用用于获取当前权限的子权限
             getAllChildrenPermission(temp, permissions);
         }
         permissions.addAll(list);

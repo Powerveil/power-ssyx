@@ -29,5 +29,11 @@ public class RegionController {
         return regionService.findRegionByKeyword(keyword);
     }
 
+    @ApiOperation("根据id获取父区域")
+    @GetMapping("/findByParentId/{parentId}")
+    public Result findByParentId(@PathVariable("parentId") Long parentId) {
+        return regionService.findByParentId(parentId);
+    }
+
 
 }

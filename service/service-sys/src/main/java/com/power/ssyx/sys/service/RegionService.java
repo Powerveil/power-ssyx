@@ -11,6 +11,9 @@ import com.power.ssyx.model.sys.Region;
  */
 public interface RegionService extends IService<Region> {
 
+    // 根据区域关键字查询区域列表信息
     Result findRegionByKeyword(String keyword);
 
+    // 根据id获取父区域
+    Result findByParentId(Long parentId);
 }

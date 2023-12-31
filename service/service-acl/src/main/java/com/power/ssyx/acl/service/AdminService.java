@@ -1,7 +1,5 @@
 package com.power.ssyx.acl.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.acl.Admin;
@@ -16,15 +14,13 @@ import java.util.List;
 public interface AdminService extends IService<Admin> {
     Result getPageList(Integer page, Integer limit, AdminQueryVo adminQueryVo);
 
-    IPage<Admin> selectAdminPage(Page<Admin> pageParam, AdminQueryVo adminQueryVo);
-
-    Result get(Integer id);
+    Result get(Long id);
 
     Result saveAdmin(Admin admin);
 
     Result updateAdminById(Admin admin);
 
-    Result deleteAdminById(Integer id);
+    Result deleteAdminById(Long id);
 
     Result deleteAdminByIds(List<Long> ids);
 }

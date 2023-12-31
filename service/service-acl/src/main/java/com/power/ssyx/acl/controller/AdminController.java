@@ -41,7 +41,7 @@ public class AdminController {
     //2.根据id查询用户
     @ApiOperation("根据id查询用户")
     @GetMapping("/get/{id}")
-    public Result get(@PathVariable(name = "id") Integer id) {
+    public Result get(@PathVariable(name = "id") Long id) {
         return adminService.get(id);
     }
 
@@ -62,7 +62,7 @@ public class AdminController {
     //5.根据id删除用户
     @ApiOperation("根据id删除用户")
     @DeleteMapping("/remove/{id}")
-    public Result deleteAdminById(@PathVariable(name = "id") Integer id) {
+    public Result deleteAdminById(@PathVariable(name = "id") Long id) {
         return adminService.deleteAdminById(id);
     }
 
@@ -77,7 +77,7 @@ public class AdminController {
     //获取某个用户的所有角色，和根据用户id查询分配角色列表
     @GetMapping("/toAssign/{adminId}")
     @ApiOperation("获取某个用户的所有角色")
-    public Result toAssign(@PathVariable("adminId") Integer adminId) {
+    public Result toAssign(@PathVariable("adminId") Long adminId) {
         // 返回map集合包含两部分数据：所有角色和为用户分配角色列表
         Map<String, Object> map = roleService.getRoleByAdminId(adminId);
         return Result.ok(map);

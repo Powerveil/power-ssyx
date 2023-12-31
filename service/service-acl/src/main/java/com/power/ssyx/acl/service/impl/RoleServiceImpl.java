@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.RoleMapper;
 import com.power.ssyx.acl.service.AdminRoleService;
 import com.power.ssyx.acl.service.RoleService;
+import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.common.utils.ParamCheckUtils;
 import com.power.ssyx.model.acl.AdminRole;
 import com.power.ssyx.model.acl.Role;
 import com.power.ssyx.vo.acl.RoleQueryVo;
@@ -60,7 +62,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public Result get(Integer id) {
+    public Result get(Long id) {
         Role role = this.getById(id);
         return Result.ok(role);
     }
@@ -117,7 +119,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public Result deleteRoleById(Integer id) {
+    public Result deleteRoleById(Long id) {
         if (this.removeById(id)) {
             return Result.ok(null);
         }
@@ -134,7 +136,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public Map<String, Object> getRoleByAdminId(Integer adminId) {
+    public Map<String, Object> getRoleByAdminId(Long adminId) {
 
         List<Role> allRolesList = list();
 
@@ -160,6 +162,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Transactional(rollbackFor = {Exception.class})
     @Override
     public Result saveAdminRole(Long adminId, Long[] roleId) {
+        if (ParamCheckUtils.validateParams(adminId, roleId)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
         LambdaQueryWrapper<AdminRole> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AdminRole::getAdminId, adminId);
         adminRoleService.remove(queryWrapper);

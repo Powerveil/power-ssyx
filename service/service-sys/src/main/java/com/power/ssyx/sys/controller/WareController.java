@@ -1,15 +1,15 @@
 package com.power.ssyx.sys.controller;
 
 import com.power.ssyx.common.result.Result;
+import com.power.ssyx.model.sys.Ware;
 import com.power.ssyx.sys.service.WareService;
 import com.power.ssyx.vo.product.WareQueryVo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author Powerveil
@@ -30,6 +30,41 @@ public class WareController {
                               @PathVariable("limit") Integer limit,
                               WareQueryVo wareQueryVo) {
         return wareService.getPageList(page, limit, wareQueryVo);
+    }
+
+    // 根据id查询仓库
+    @ApiOperation("根据id查询仓库")
+    @GetMapping("/get/{id}")
+    public Result get(@PathVariable(name = "id") Long id) {
+        return wareService.get(id);
+    }
+
+    // 添加仓库
+    @ApiOperation("添加仓库")
+    @PostMapping("/save")
+    public Result saveWare(@RequestBody Ware ware) {
+        return wareService.saveWare(ware);
+    }
+
+    // 修改仓库
+    @ApiOperation("修改仓库")
+    @PutMapping("/update")
+    public Result updateWareById(@RequestBody Ware ware) {
+        return wareService.updateWareById(ware); // TODO 使用DTO id什么的不能传进来
+    }
+
+    // 删除仓库 removeById
+    @ApiOperation("删除仓库")
+    @DeleteMapping("/remove/{id}")
+    public Result removeWareById(@PathVariable("id") Long id) {
+        return wareService.removeWareById(id);
+    }
+
+    // 批量删除仓库
+    @ApiOperation("批量删除仓库")
+    @DeleteMapping("/batchRemove")
+    public Result deleteWareByIds(@RequestBody List<Long> ids) {
+        return wareService.deleteWareByIds(ids);
     }
 
     @ApiOperation("查询所有仓库")

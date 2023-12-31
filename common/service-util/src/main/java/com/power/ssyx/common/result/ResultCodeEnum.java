@@ -15,6 +15,7 @@ public enum ResultCodeEnum {
     FAIL(201, "失败"),
     SERVICE_ERROR(2012, "服务异常"),
     DATA_ERROR(204, "数据异常"),
+    PARAM_ERROR(2041, "参数异常"),
     ILLEGAL_REQUEST(205, "非法请求"),
     REPEAT_SUBMIT(206, "重复提交"),
 

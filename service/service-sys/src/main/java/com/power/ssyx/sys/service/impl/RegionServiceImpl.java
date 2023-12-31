@@ -20,6 +20,7 @@ import java.util.Objects;
 public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region>
         implements RegionService {
 
+    // 根据区域关键字查询区域列表信息
     @Override
     public Result findRegionByKeyword(String keyword) {
         if (Objects.isNull(keyword)) {
@@ -29,6 +30,15 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region>
         queryWrapper.like(Region::getName, keyword);
         List<Region> list = list(queryWrapper);
         return Result.ok(list);
+    }
+
+    // 根据id获取父区域
+    @Override
+    public Result findByParentId(Long parentId) {
+        LambdaQueryWrapper<Region> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Region::getId, parentId);
+        Region region = getOne(queryWrapper);
+        return Result.ok(region);
     }
 
 }

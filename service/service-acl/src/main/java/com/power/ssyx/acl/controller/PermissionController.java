@@ -50,21 +50,21 @@ public class PermissionController {
         return permissionService.removePermission(id);
     }
 
-
-    // 查看某个角色的权限列表
-    @ApiOperation("查看某个角色的权限列表")
-    @GetMapping("/toAssign/{roleId}")
-    public Result toAssign(@PathVariable("roleId") Long roleId) {
-        return permissionService.toAssign(roleId);
-    }
-
-
-    // 给某个角色授权
-    @ApiOperation("给某个角色授权")
-    @PostMapping("/doAssign")
-    public Result doAssign(@RequestParam("roleId") Long roleId,
-                           @RequestParam("permissionId") Long[] permissionId) {
-        return permissionService.doAssign(roleId, permissionId);
-    }
+    // 实现有问题 没有找到使用这两个接口地方 暂时不实现
+//    // 查看某个角色的权限列表
+//    @ApiOperation("查看某个角色的权限列表")
+//    @GetMapping("/toAssign/{roleId}")
+//    public Result toAssign(@PathVariable("roleId") Long roleId) {
+//        return permissionService.toAssign(roleId);
+//    }
+//
+//
+//    // 给某个角色授权
+//    @ApiOperation("给某个角色授权")
+//    @PostMapping("/doAssign")
+//    public Result doAssign(@RequestParam("roleId") Long roleId,
+//                           @RequestParam("permissionId") Long[] permissionId) {
+//        return permissionService.doAssign(roleId, permissionId);
+//    }
 
 }

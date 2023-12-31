@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.acl.mapper.AdminMapper;
 import com.power.ssyx.acl.service.AdminService;
+import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.common.utils.MD5;
+import com.power.ssyx.common.utils.ParamCheckUtils;
 import com.power.ssyx.model.acl.Admin;
 import com.power.ssyx.vo.acl.AdminQueryVo;
 import org.springframework.stereotype.Service;
@@ -24,15 +26,25 @@ import java.util.Objects;
  */
 @Service
 public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements AdminService {
+
+    //
+//    @Transactional(rollbackFor = Exception.class, transactionManager = "")
+//    @Override
+//    public boolean saveBatch(Collection<Admin> entityList, int batchSize) {
+//        return super.saveBatch(entityList, batchSize);
+//    }
+
     @Override
     public Result getPageList(Integer page, Integer limit, AdminQueryVo adminQueryVo) {
+        if (ParamCheckUtils.validateParams(page, limit)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
         Page<Admin> pageParam = new Page<>(page, limit);
         IPage<Admin> pageModel = this.selectAdminPage(pageParam, adminQueryVo);
         return Result.ok(pageModel);
     }
 
-    @Override
-    public IPage<Admin> selectAdminPage(Page<Admin> pageParam, AdminQueryVo adminQueryVo) {
+    private IPage<Admin> selectAdminPage(Page<Admin> pageParam, AdminQueryVo adminQueryVo) {
         String name = adminQueryVo.getName();
         String username = adminQueryVo.getUsername();
         LambdaQueryWrapper<Admin> queryWrapper = new LambdaQueryWrapper<>();
@@ -54,7 +66,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     }
 
     @Override
-    public Result get(Integer id) {
+    public Result get(Long id) {
         Admin admin = this.getById(id);
         return Result.ok(admin);
     }
@@ -118,7 +130,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     }
 
     @Override
-    public Result deleteAdminById(Integer id) {
+    public Result deleteAdminById(Long id) {
         if (this.removeById(id)) {
             return Result.ok(null);
         }
@@ -128,6 +140,9 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     @Override
     @Transactional(rollbackFor = {Exception.class})
     public Result deleteAdminByIds(List<Long> ids) {
+        if (ParamCheckUtils.validateParams(ids)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
         if (this.removeByIds(ids)) {
             return Result.ok(null);
         }

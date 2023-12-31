@@ -6,14 +6,16 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.common.utils.ParamCheckUtils;
 import com.power.ssyx.model.sys.RegionWare;
 import com.power.ssyx.sys.mapper.RegionWareMapper;
 import com.power.ssyx.sys.service.RegionWareService;
 import com.power.ssyx.vo.sys.RegionWareQueryVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * @author power
@@ -27,8 +29,13 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
     @Autowired
     private RegionWareMapper regionWareMapper;
 
+    // 获取开通区域列表
     @Override
     public Result getPageList(Integer page, Integer limit, RegionWareQueryVo regionWareQueryVo) {
+        if (ParamCheckUtils.validateParams(page, limit)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
+
         Page<RegionWare> pageParam = new Page<>(page, limit);
         String keyword = regionWareQueryVo.getKeyword();
         LambdaQueryWrapper<RegionWare> queryWrapper = new LambdaQueryWrapper<>();
@@ -41,6 +48,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
         return Result.ok(regionWarePage);
     }
 
+    // 添加开通区域
     @Override
     public Result saveRegionWare(RegionWare regionWare) {
         // 判断区域是否已经开通
@@ -56,22 +64,44 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
         return Result.ok(null);
     }
 
+    // 删除开通区域 removeById
     @Override
     public Result removeRegionWareById(Long id) {
+        if (ParamCheckUtils.validateParams(id)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
         removeById(id);
         return Result.ok(null);
     }
 
+    // 更新开通区域状态 updateStatus
     @Override
-    @Transactional(rollbackFor = {Exception.class})
     public Result updateStatus(Long id, Integer status) {
-//        // 先查询regionWare 保证其他值不变
-//        RegionWare regionWare = getById(id);
-//        regionWare.setStatus(status);
-//        // 尽量不更新其他无盖你数据
-//        updateById(regionWare);
-        int update = regionWareMapper.updateStatus(id, status);
-        return Result.ok(null);
+        if (ParamCheckUtils.validateParams(id, status)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
+        if (regionWareMapper.updateStatus(id, status) > 0) {
+            Result.ok(null);
+        }
+        return Result.fail("更新开通区域状态失败");
+    }
+
+    // 批量删除开通区域
+    @Override
+    public Result deleteRegionWareByIds(List<Long> ids) {
+        if (ParamCheckUtils.validateParams(ids)) {
+            throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
+        }
+        if (this.removeByIds(ids)) {
+            return Result.ok(null);
+        }
+        return Result.fail("批量删除开通区域失败");
+    }
+
+    // 根据id查询开通区域
+    @Override
+    public Result get(Long id) {
+        return Result.ok(getById(id));
     }
 }
 
