@@ -40,7 +40,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     }
 
     @Override
-    public Result get(Integer id) {
+    public Result get(Long id) {
         AttrGroup attrGroup = this.getById(id);
         return Result.ok(attrGroup);
     }
@@ -49,12 +49,12 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     public Result saveAttrGroup(AttrGroup attrGroup) {
         // TODO 一定要使用DTO接受数据！！！
         attrGroup.setId(null);// 不能这样做
-        // 权限名需要存在
+        // 组名需要存在
         String attrGroupName = attrGroup.getName();
         if (!StringUtils.hasText(attrGroupName)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_NAME_IS_BLANK);
         }
-        // 数据库不能有相同的权限名
+        // 数据库不能有相同的组名
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttrGroup::getName, attrGroupName);
         if (count(queryWrapper) > 0) {
@@ -72,7 +72,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
         if (Objects.isNull(attrGroup.getId())) {
             return Result.build(null, ResultCodeEnum.ID_IS_NULL);
         }
-        // 权限名需要存在
+        // 组名需要存在
         String attrGroupName = attrGroup.getName();
         if (!StringUtils.hasText(attrGroupName)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_NAME_IS_BLANK);
@@ -80,7 +80,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
         // 数据库不能有相同的属性分组名
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttrGroup::getName, attrGroupName);
-        AttrGroup one = getOne(queryWrapper);
+        AttrGroup one = this.getOne(queryWrapper);
         if (!Objects.isNull(one) && !one.getId().equals(attrGroup.getId())) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
@@ -91,7 +91,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     }
 
     @Override
-    public Result deleteAttrGroupById(Integer id) {
+    public Result deleteAttrGroupById(Long id) {
         if (this.removeById(id)) {
             return Result.ok(null);
         }

@@ -16,13 +16,13 @@ public interface AttrGroupService extends IService<AttrGroup> {
 
     Result getPageList(Integer page, Integer limit, AttrGroupQueryVo attrGroupQueryVo);
 
-    Result get(Integer id);
+    Result get(Long id);
 
     Result saveAttrGroup(AttrGroup category);
 
     Result updateAttrGroupById(AttrGroup category);
 
-    Result deleteAttrGroupById(Integer id);
+    Result deleteAttrGroupById(Long id);
 
     Result deleteAttrGroupByIds(List<Long> ids);
 

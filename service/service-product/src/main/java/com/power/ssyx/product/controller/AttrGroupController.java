@@ -34,7 +34,7 @@ public class AttrGroupController {
     //2.根据id查询属性分组
     @ApiOperation("根据id查询属性分组")
     @GetMapping("/get/{id}")
-    public Result get(@PathVariable(name = "id") Integer id) {
+    public Result get(@PathVariable(name = "id") Long id) {
         return attrGroupService.get(id);
     }
 
@@ -55,7 +55,7 @@ public class AttrGroupController {
     //5.根据id删除属性分组
     @ApiOperation("根据id删除属性分组")
     @DeleteMapping("/remove/{id}")
-    public Result deleteAttrGroupById(@PathVariable(name = "id") Integer id) {
+    public Result deleteAttrGroupById(@PathVariable(name = "id") Long id) {
         return attrGroupService.deleteAttrGroupById(id);
     }
 

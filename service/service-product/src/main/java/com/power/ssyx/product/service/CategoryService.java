@@ -16,13 +16,13 @@ public interface CategoryService extends IService<Category> {
 
     Result getPageList(Integer page, Integer limit, CategoryVo categoryVo);
 
-    Result get(Integer id);
+    Result get(Long id);
 
     Result saveCategory(Category category);
 
     Result updateCategoryById(Category category);
 
-    Result deleteCategoryById(Integer id);
+    Result deleteCategoryById(Long id);
 
     Result deleteCategoryByIds(List<Long> ids);
 

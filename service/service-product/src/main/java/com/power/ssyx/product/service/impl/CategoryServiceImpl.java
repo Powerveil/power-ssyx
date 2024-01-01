@@ -41,7 +41,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     }
 
     @Override
-    public Result get(Integer id) {
+    public Result get(Long id) {
         Category category = this.getById(id);
         return Result.ok(category);
     }
@@ -92,7 +92,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     }
 
     @Override
-    public Result deleteCategoryById(Integer id) {
+    public Result deleteCategoryById(Long id) {
         if (this.removeById(id)) {
             return Result.ok(null);
         }

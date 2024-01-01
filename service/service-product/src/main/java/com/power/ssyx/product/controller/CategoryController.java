@@ -35,7 +35,7 @@ public class CategoryController {
     //2.根据id查询商品分类
     @ApiOperation("根据id查询商品分类")
     @GetMapping("/get/{id}")
-    public Result get(@PathVariable(name = "id") Integer id) {
+    public Result get(@PathVariable(name = "id") Long id) {
         return categoryService.get(id);
     }
 
@@ -56,7 +56,7 @@ public class CategoryController {
     //5.根据id删除商品分类
     @ApiOperation("根据id删除商品分类")
     @DeleteMapping("/remove/{id}")
-    public Result deleteCategoryById(@PathVariable(name = "id") Integer id) {
+    public Result deleteCategoryById(@PathVariable(name = "id") Long id) {
         return categoryService.deleteCategoryById(id);
     }
 
