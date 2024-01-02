@@ -58,7 +58,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         // 数据库不能有相同的权限名
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, categoryName);
-        if (count(queryWrapper) > 0) {
+        if (this.count(queryWrapper) > 0) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
         if (this.save(category)) {
@@ -81,7 +81,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         // 数据库不能有相同的商品分类名
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, categoryName);
-        Category one = getOne(queryWrapper);
+        Category one = this.getOne(queryWrapper);
         if (!Objects.isNull(one) && !one.getId().equals(category.getId())) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
@@ -112,7 +112,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     public Result findAllList() {
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByAsc(Category::getSort);
-        List<Category> list = list(queryWrapper);
+        List<Category> list = this.list(queryWrapper);
         return Result.ok(list);
     }
 
@@ -120,12 +120,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     public List<Category> getCategoryListByIds(List<Long> ids) {
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(Category::getId, ids);
-        List<Category> categoryList = list(queryWrapper);
+        List<Category> categoryList = this.list(queryWrapper);
         return categoryList;
     }
 
     @Override
     public List<Category> findAllCategoryList() {
-        return list();
+        return this.list();
     }
 }

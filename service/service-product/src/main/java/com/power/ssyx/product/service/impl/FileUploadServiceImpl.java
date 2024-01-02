@@ -50,7 +50,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
 //        objectName = file.getOriginalFilename();
 //        objectName = createPath(file.getOriginalFilename());
-        objectName = createPath3(file.getOriginalFilename());
+        objectName = this.createPath3(file.getOriginalFilename());
 
 
         // 创建ClientBuilderConfiguration。

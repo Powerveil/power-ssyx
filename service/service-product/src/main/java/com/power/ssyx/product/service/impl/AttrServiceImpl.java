@@ -41,7 +41,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr>
         // 数据库不能有相同的商品属性名
         LambdaQueryWrapper<Attr> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Attr::getName, attrName);
-        if (count(queryWrapper) > 0) {
+        if (this.count(queryWrapper) > 0) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
         if (this.save(attr)) {
@@ -64,7 +64,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr>
         // 数据库不能有相同的属性分组名
         LambdaQueryWrapper<Attr> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Attr::getName, attrName);
-        Attr one = getOne(queryWrapper);
+        Attr one = this.getOne(queryWrapper);
         if (!Objects.isNull(one) && !one.getId().equals(attr.getId())) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
@@ -95,7 +95,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr>
     public Result getListByGroupId(Long groupId) {
         LambdaQueryWrapper<Attr> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(!Objects.isNull(groupId), Attr::getAttrGroupId, groupId);
-        List<Attr> list = list(queryWrapper);
+        List<Attr> list = this.list(queryWrapper);
         return Result.ok(list);
     }
 

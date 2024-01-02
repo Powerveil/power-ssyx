@@ -23,21 +23,21 @@ public class SkuAttrValueServiceImpl extends ServiceImpl<SkuAttrValueMapper, Sku
         LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuAttrValue::getSkuId, skuId);
         queryWrapper.orderByAsc(SkuAttrValue::getSort);
-        return list(queryWrapper);
+        return this.list(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuId(Long skuId) {
         LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuAttrValue::getSkuId, skuId);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuIds(List<Long> skuIds) {
         LambdaQueryWrapper<SkuAttrValue> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SkuAttrValue::getSkuId, skuIds);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 }
 

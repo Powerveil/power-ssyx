@@ -22,21 +22,21 @@ public class SkuPosterServiceImpl extends ServiceImpl<SkuPosterMapper, SkuPoster
     public List<SkuPoster> getSkuPosterList(Long skuId) {
         LambdaQueryWrapper<SkuPoster> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuPoster::getSkuId, skuId);
-        return list(queryWrapper);
+        return this.list(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuId(Long skuId) {
         LambdaQueryWrapper<SkuPoster> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuPoster::getSkuId, skuId);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuIds(List<Long> skuIds) {
         LambdaQueryWrapper<SkuPoster> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SkuPoster::getSkuId, skuIds);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 }
 

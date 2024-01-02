@@ -111,7 +111,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 //        List<SkuPoster> skuPosterList = skuPosterService.getSkuPosterList(id);
 //        skuInfoVo.setSkuPosterList(skuPosterList);
 //        return Result.ok(skuInfoVo);
-        return Result.ok(getSkuInfoVo(id));
+        return Result.ok(this.getSkuInfoVo(id));
     }
 
     @Override
@@ -126,7 +126,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         // 数据库不能有相同的sku信息名
         LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuInfo::getSkuName, skuInfoName);
-        if (count(queryWrapper) > 0) {
+        if (this.count(queryWrapper) > 0) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
         // TODO 判断条件
@@ -141,6 +141,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         transactionTemplate.execute((status) -> {
             // 添加sku信息表
             this.save(skuInfo);
+            // 重新设置skuId
+            skuInfoVo.setId(skuInfo.getId());
             // 保存sku商品属性、图片、海报
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
             skuInfoServiceProxy.saveSkuOthers(skuInfoVo);
@@ -151,8 +153,9 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 
     @Override
     public Result updateSkuInfoById(SkuInfoVo skuInfoVo) {
+        Long skuId = skuInfoVo.getId();
         // Id不能为空
-        if (Objects.isNull(skuInfoVo.getId())) {
+        if (Objects.isNull(skuId)) {
             return Result.build(null, ResultCodeEnum.ID_IS_NULL);
         }
         // sku信息名需要存在
@@ -163,8 +166,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         // 数据库不能有相同的商品分类名
         LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuInfo::getSkuName, skuInfoName);
-        SkuInfo one = getOne(queryWrapper);
-        if (!Objects.isNull(one) && !skuInfoVo.getId().equals(one.getId())) {
+        SkuInfo one = this.getOne(queryWrapper);
+        if (!Objects.isNull(one) && !skuId.equals(one.getId())) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
 
@@ -181,8 +184,20 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
 
             // 先删除在添加
-            skuInfoServiceProxy.deleteSkuOthersBySkuId(skuInfoVo.getId());
+            skuInfoServiceProxy.deleteSkuOthersBySkuId(skuId);
             skuInfoServiceProxy.saveSkuOthers(skuInfoVo);
+            // 发送MQ 先删除后添加
+            // 有两种解决方案
+            // - 方案一：1.先发送删除MQ下架 2.后发送MQ上架 (我采用的)
+            // - 方案二：重写一个routingKey(表示先上架后下架)
+            // 发送MQ通知ES删除数据
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_LOWER,
+                    skuId);
+
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_UPPER,
+                    skuId);
             return Boolean.TRUE;
         });
 
@@ -195,6 +210,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             this.removeById(id);
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
             skuInfoServiceProxy.deleteSkuOthersBySkuId(id);
+            // 发送MQ通知ES删除数据
             rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
                     MqConst.ROUTING_GOODS_LOWER,
                     id);
@@ -217,7 +233,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
                 }
                 skuAttrValueService.saveBatch(skuAttrValueList);
             }
-
+            // TODO 待完善 sort字段 前台表单中没有填写sort字段的操作 stu_image表中的sort字段
             if (!Collections.isEmpty(skuImagesList)) {
                 for (SkuImage skuImage : skuImagesList) {
                     skuImage.setSkuId(skuId);
@@ -300,7 +316,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     public List<SkuInfo> getSkuListByIds(List<Long> ids) {
         LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SkuInfo::getId, ids);
-        List<SkuInfo> list = list(queryWrapper);
+        List<SkuInfo> list = this.list(queryWrapper);
         return list;
     }
 
@@ -308,7 +324,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     public List<SkuInfo> findSkuInfoByKeyword(String keyword) {
         LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(SkuInfo::getSkuName, keyword);
-        List<SkuInfo> list = list(queryWrapper);
+        List<SkuInfo> list = this.list(queryWrapper);
         return list;
     }
 
@@ -319,7 +335,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         queryWrapper.eq(SkuInfo::getPublishStatus, SystemConstants.PUBLISH_PASS);
         queryWrapper.orderByDesc(SkuInfo::getStock); //库存排序
         queryWrapper.last("limit 2");
-        return list(queryWrapper);
+        return this.list(queryWrapper);
     }
 
     @Override

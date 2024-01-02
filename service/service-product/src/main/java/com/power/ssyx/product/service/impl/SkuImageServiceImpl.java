@@ -23,21 +23,21 @@ public class SkuImageServiceImpl extends ServiceImpl<SkuImageMapper, SkuImage>
         LambdaQueryWrapper<SkuImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuImage::getSkuId, skuId);
         queryWrapper.orderByAsc(SkuImage::getSort);
-        return list(queryWrapper);
+        return this.list(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuId(Long skuId) {
         LambdaQueryWrapper<SkuImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuImage::getSkuId, skuId);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 
     @Override
     public boolean deleteBySkuIds(List<Long> skuIds) {
         LambdaQueryWrapper<SkuImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SkuImage::getSkuId, skuIds);
-        return remove(queryWrapper);
+        return this.remove(queryWrapper);
     }
 }
 

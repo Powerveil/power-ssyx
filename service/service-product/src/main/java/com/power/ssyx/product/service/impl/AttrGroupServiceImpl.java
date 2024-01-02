@@ -57,7 +57,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
         // 数据库不能有相同的组名
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttrGroup::getName, attrGroupName);
-        if (count(queryWrapper) > 0) {
+        if (this.count(queryWrapper) > 0) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
         if (this.save(attrGroup)) {
@@ -111,7 +111,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     public Result findAllList() {
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByDesc(AttrGroup::getId);
-        List<AttrGroup> list = list(queryWrapper);
+        List<AttrGroup> list = this.list(queryWrapper);
         return Result.ok(list);
     }
 }
