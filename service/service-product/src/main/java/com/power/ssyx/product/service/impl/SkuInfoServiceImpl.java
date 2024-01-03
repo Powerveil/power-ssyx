@@ -158,6 +158,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         if (Objects.isNull(skuId)) {
             return Result.build(null, ResultCodeEnum.ID_IS_NULL);
         }
+        // 查询现在的上下架状态，如果是处于上架状态，不允许修改
+        SkuInfo skuInfo1 = this.getById(skuId);
+        if (SystemConstants.PUBLISH_PASS.equals(skuInfo1.getPublishStatus())) {
+            return Result.build(null, ResultCodeEnum.SKU_CURRENT_PUBLISHED_ERROR);
+        }
         // sku信息名需要存在
         String skuInfoName = skuInfoVo.getSkuName();
         if (!StringUtils.hasText(skuInfoName)) {
@@ -186,18 +191,6 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             // 先删除在添加
             skuInfoServiceProxy.deleteSkuOthersBySkuId(skuId);
             skuInfoServiceProxy.saveSkuOthers(skuInfoVo);
-            // 发送MQ 先删除后添加
-            // 有两种解决方案
-            // - 方案一：1.先发送删除MQ下架 2.后发送MQ上架 (我采用的)
-            // - 方案二：重写一个routingKey(表示先上架后下架)
-            // 发送MQ通知ES删除数据
-            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
-                    MqConst.ROUTING_GOODS_LOWER,
-                    skuId);
-
-            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
-                    MqConst.ROUTING_GOODS_UPPER,
-                    skuId);
             return Boolean.TRUE;
         });
 
@@ -277,11 +270,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
     @Override
     public Result check(Long id, Integer status) {
         transactionTemplate.execute((status1) -> {
-            int ss = skuInfoMapper.check(id, status);
-            // 如果审核未通过 强制下架 每次调用保证数据库的数据是正确的
+            // 如果审核未通过 强制下架 每次调用保证数据库的数据是正确的 先下架够更新审核状态，保证上下架接口不出现意外的失败
             if (SystemConstants.CHECK_NOT_PASS.equals(status)) {
                 skuInfoMapper.publish(id, SystemConstants.PUBLISH_NOT_PASS);
             }
+            int ss = skuInfoMapper.check(id, status);
             return Boolean.TRUE;//TODO 所有transactionTemplate.execute内中的异常需要自行处理
         });
         return Result.ok(null);
@@ -289,7 +282,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
 
     @Override
     public Result publish(Long skuId, Integer status) {
-        SkuInfo skuInfo = getById(skuId);
+        SkuInfo skuInfo = this.getById(skuId);
         if (SystemConstants.CHECK_NOT_PASS.equals(skuInfo.getCheckStatus())) return Result.fail("审核通过才能继续操作");
         int ss = skuInfoMapper.publish(skuId, status);
         if (SystemConstants.PUBLISH_PASS.equals(status)) { // 上架

@@ -8,7 +8,6 @@ import com.power.ssyx.model.product.Attr;
 import com.power.ssyx.product.mapper.AttrMapper;
 import com.power.ssyx.product.service.AttrService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -65,7 +64,10 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr>
         LambdaQueryWrapper<Attr> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Attr::getName, attrName);
         Attr one = this.getOne(queryWrapper);
-        if (!Objects.isNull(one) && !one.getId().equals(attr.getId())) {
+        if (Objects.isNull(one)) {
+            return Result.build(null, ResultCodeEnum.DATA_ERROR);
+        }
+        if (!one.getId().equals(attr.getId())) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
         if (this.updateById(attr)) {
@@ -83,7 +85,6 @@ public class AttrServiceImpl extends ServiceImpl<AttrMapper, Attr>
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class})
     public Result deleteAttrByIds(List<Long> ids) {
         if (this.removeByIds(ids)) {
             return Result.ok(null);

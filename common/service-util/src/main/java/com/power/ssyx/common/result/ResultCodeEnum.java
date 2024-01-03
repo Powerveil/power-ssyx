@@ -48,6 +48,9 @@ public enum ResultCodeEnum {
     ADMIN_IS_EXIST(276, "用户名已存在，不能使用该用户名"),
     ID_IS_NULL(277, "Id不能为空"),
 
+    // 280开头的表示操作 shequ-product 数据库
+    SKU_CURRENT_PUBLISHED_ERROR(2801, "当前商品为上架状态，操作失败"),
+
 
     CATEGORY_NAME_IS_BLANK(285, "商品分类名称不嫩为空"),
     CATEGORY_IS_EXIST(286, "商品分类名称已存在，不能使用该商品分类名称"),

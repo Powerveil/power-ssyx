@@ -11,7 +11,6 @@ import com.power.ssyx.product.mapper.AttrGroupMapper;
 import com.power.ssyx.product.service.AttrGroupService;
 import com.power.ssyx.vo.product.AttrGroupQueryVo;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -69,7 +68,8 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     @Override
     public Result updateAttrGroupById(AttrGroup attrGroup) {
         // Id不能为空
-        if (Objects.isNull(attrGroup.getId())) {
+        Long attrGroupId = attrGroup.getId();
+        if (Objects.isNull(attrGroupId)) {
             return Result.build(null, ResultCodeEnum.ID_IS_NULL);
         }
         // 组名需要存在
@@ -81,7 +81,10 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
         LambdaQueryWrapper<AttrGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttrGroup::getName, attrGroupName);
         AttrGroup one = this.getOne(queryWrapper);
-        if (!Objects.isNull(one) && !one.getId().equals(attrGroup.getId())) {
+        if (Objects.isNull(one)) {
+            return Result.build(null, ResultCodeEnum.DATA_ERROR);
+        }
+        if (!one.getId().equals(attrGroupId)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_IS_EXIST);
         }
         if (this.updateById(attrGroup)) {
@@ -99,7 +102,6 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupMapper, AttrGroup
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class})
     public Result deleteAttrGroupByIds(List<Long> ids) {
         if (this.removeByIds(ids)) {
             return Result.ok(null);

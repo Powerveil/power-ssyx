@@ -11,7 +11,6 @@ import com.power.ssyx.product.mapper.CategoryMapper;
 import com.power.ssyx.product.service.CategoryService;
 import com.power.ssyx.vo.product.CategoryVo;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -82,7 +81,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, categoryName);
         Category one = this.getOne(queryWrapper);
-        if (!Objects.isNull(one) && !one.getId().equals(category.getId())) {
+        if (Objects.isNull(one)) {
+            return Result.build(null, ResultCodeEnum.DATA_ERROR);
+        }
+        if (!one.getId().equals(category.getId())) {
             return Result.build(null, ResultCodeEnum.CATEGORY_IS_EXIST);
         }
         if (this.updateById(category)) {
@@ -100,7 +102,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class})
     public Result deleteCategoryByIds(List<Long> ids) {
         if (this.removeByIds(ids)) {
             return Result.ok(null);
