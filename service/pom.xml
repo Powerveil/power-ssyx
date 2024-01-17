@@ -92,6 +92,11 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <!--https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeinez找最新版-->
+        </dependency>
     </dependencies>
 
     <build>

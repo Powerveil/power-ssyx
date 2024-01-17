@@ -8,6 +8,7 @@ import com.aliyun.oss.common.auth.CredentialsProviderFactory;
 import com.aliyun.oss.common.auth.EnvironmentVariableCredentialsProvider;
 import com.aliyun.oss.model.PutObjectRequest;
 import com.aliyun.oss.model.PutObjectResult;
+import com.power.ssyx.annotation.SystemLimit;
 import com.power.ssyx.product.service.FileUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -38,6 +39,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     private String bucketname;
 
     @Override
+    @SystemLimit(businessName = "图片上传")
     public String fileUpload(MultipartFile file) throws com.aliyuncs.exceptions.ClientException {
         // 从环境变量中获取访问凭证。运行本代码示例之前，请确保已设置环境变量OSS_ACCESS_KEY_ID和OSS_ACCESS_KEY_SECRET。
         EnvironmentVariableCredentialsProvider credentialsProvider = CredentialsProviderFactory.newEnvironmentVariableCredentialsProvider();

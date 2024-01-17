@@ -57,7 +57,9 @@ public enum ResultCodeEnum {
     ATTR_GROUP_NAME_IS_BLANK(290, "属性分组名称不嫩为空"),
     ATTR_GROUP_IS_EXIST(291, "属性分组名称已存在，不能使用该属性分组名称"),
     ATTR_NAME_IS_BLANK(290, "商品属性名称不嫩为空"),
-    ATTR_IS_EXIST(291, "商品属性名称已存在，不能使用该商品属性名称");
+    ATTR_IS_EXIST(291, "商品属性名称已存在，不能使用该商品属性名称"),
+
+    IMAGE_UPLOAD_LIMIT(29501, "图片上传太频繁");
 
     private Integer code;
 
