@@ -188,7 +188,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             // 修改海报信息
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
 
-            // 先删除在添加
+            // 先删除再添加
             skuInfoServiceProxy.deleteSkuOthersBySkuId(skuId);
             skuInfoServiceProxy.saveSkuOthers(skuInfoVo);
             return Boolean.TRUE;
@@ -440,11 +440,22 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             this.removeByIds(ids);
             skuInfoServiceProxy = ((SkuInfoService) AopContext.currentProxy());
             skuInfoServiceProxy.deleteSkuOthersBySkuIds(ids);
-            for (Long id : ids) {
-                rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
-                        MqConst.ROUTING_GOODS_LOWER,
-                        id);
-            }
+            // 发送MQ 通知ES 方案一：分多次发送MQ
+//            for (Long id : ids) {
+//                rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+//                        MqConst.ROUTING_GOODS_LOWER,
+//                        id);
+//            }
+
+            // 方案二：一次发送多个id
+
+            // https://www.toutiao.com/article/6763634702705230344/?&source=m_redirect
+            String idsStr = org.apache.commons.lang3.StringUtils.join(ids, ",");
+
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                    MqConst.ROUTING_GOODS_LOWER_STR_IDS,
+                    idsStr);
+
             return Boolean.TRUE;
         });
         return Result.ok("批量删除商品分类成功");

@@ -108,7 +108,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (this.save(activityInfo)) {
             return Result.ok(null);
         }
-        return Result.fail("添加属性分组失败");
+        return Result.fail("添加活动失败");
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (!StringUtils.hasText(activityInfoName)) {
             return Result.build(null, ResultCodeEnum.ATTR_GROUP_NAME_IS_BLANK);
         }
-        // 数据库不能有相同的属性分组名
+        // 数据库不能有相同的活动名
         LambdaQueryWrapper<ActivityInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ActivityInfo::getActivityName, activityInfoName);
         ActivityInfo one = getOne(queryWrapper);
@@ -132,7 +132,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (this.updateById(activityInfo)) {
             return Result.ok(null);
         }
-        return Result.fail("更新属性分组失败");
+        return Result.fail("更新活动失败");
     }
 
     @Override
@@ -140,7 +140,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (this.removeById(id)) {
             return Result.ok(null);
         }
-        return Result.fail("删除属性分组失败");
+        return Result.fail("删除活动失败");
     }
 
     @Override
@@ -149,7 +149,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         if (this.removeByIds(ids)) {
             return Result.ok(null);
         }
-        return Result.fail("批量删除属性分组失败");
+        return Result.fail("批量删除活动失败");
     }
 
     @Override
@@ -180,7 +180,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         // 第一步 根据活动id删除之前规则数据
         // TODO 安全性校验
         Long activityId = activityRuleVo.getActivityId();
-        ActivityInfo activityInfo = getById(activityId);
+        ActivityInfo activityInfo = this.getById(activityId);
         ActivityType activityType = activityInfo.getActivityType();
 
         List<ActivityRule> activityRuleList = activityRuleVo.getActivityRuleList().stream().map(item -> {

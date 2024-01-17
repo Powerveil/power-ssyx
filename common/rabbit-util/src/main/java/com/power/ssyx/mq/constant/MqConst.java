@@ -17,6 +17,7 @@ public class MqConst {
     public static final String EXCHANGE_GOODS_DIRECT = "ssyx.goods.direct";
     public static final String ROUTING_GOODS_UPPER = "ssyx.goods.upper";
     public static final String ROUTING_GOODS_LOWER = "ssyx.goods.lower";
+    public static final String ROUTING_GOODS_LOWER_STR_IDS = "ssyx.goods.lower.strids";
     //队列
     public static final String QUEUE_GOODS_UPPER = "ssyx.goods.upper";
     public static final String QUEUE_GOODS_LOWER = "ssyx.goods.lower";

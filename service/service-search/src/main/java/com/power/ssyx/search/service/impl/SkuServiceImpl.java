@@ -74,7 +74,7 @@ public class SkuServiceImpl implements SkuService {
         skuEs.setStock(skuInfo.getStock());
         skuEs.setSale(skuInfo.getSale());
         skuEs.setPerLimit(skuInfo.getPerLimit());
-        if (skuInfo.getSkuType() == SkuType.COMMON.getCode()) { // 普通商品
+        if (Objects.equals(skuInfo.getSkuType(), SkuType.COMMON.getCode())) { // 普通商品
 //            skuEs.setSkuType(0);
 //            skuEs.setPrice(skuInfo.getPrice().doubleValue());
 //            skuEs.setStock(skuInfo.getStock());
@@ -93,7 +93,7 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public Result lowerSku(Long skuId) {
         skuRepository.deleteById(skuId);
-        return null;
+        return Result.ok(null);
     }
 
     @Override

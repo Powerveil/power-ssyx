@@ -157,7 +157,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         List<SkuInfo> skuInfoList = new ArrayList<>();
         List<Category> categoryList = new ArrayList<>();
         // 第一步 根据优惠卷id查询优惠卷基本信息 coupon_info表
-        CouponInfo couponInfo = getById(id);
+        CouponInfo couponInfo = this.getById(id);
         Integer type = couponInfo.getCouponType().getCode();
 
         // TODO 这里会不会出现类型既有SKU又有CATEGORY
@@ -169,20 +169,20 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         queryWrapper.eq(CouponRange::getCouponId, id);
         queryWrapper.eq(CouponRange::getRangeType, type);
 
-        // 获取SKU Ids
-        List<Long> Ids = couponRangeService.list(queryWrapper)
+        // 获取rangeIds
+        List<Long> rangeIds = couponRangeService.list(queryWrapper)
                 .stream().map(CouponRange::getRangeId).collect(Collectors.toList());
-        if (!Ids.isEmpty()) {
+        if (!rangeIds.isEmpty()) {
 //            if (SystemConstants.RANGE_TYPE_IS_SKU.equals(type)) {
             // TODO 严重bug
             if (CouponRangeType.SKU.getCode().equals(type)) {
                 // 如果规则类型是SKU 得到skuId，远程调用根据多个skuId值获取对应sku信息
-                skuInfoList = productFeignClient.getSkuListByIds(Ids);
+                skuInfoList = productFeignClient.getSkuListByIds(rangeIds);
                 result.put("skuInfoList", skuInfoList);
 //            } else if (SystemConstants.RANGE_TYPE_IS_CATEGORY.equals(type)) {
             } else if (CouponRangeType.CATEGORY.getCode().equals(type)) {
                 // 如果规则类型是分类，得到分类Id，远程调用根据多个分类Id值获取对应分类信息
-                categoryList = productFeignClient.getCategoryListByIds(Ids);
+                categoryList = productFeignClient.getCategoryListByIds(rangeIds);
                 result.put("categoryList", categoryList);
             }
         }
@@ -221,7 +221,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
         // 根据优惠卷id删除规则数据
         Long couponId = couponRuleVo.getCouponId();
 
-        CouponInfo couponInfo = getById(couponId);
+        CouponInfo couponInfo = this.getById(couponId);
         couponInfo.setRangeType(couponRuleVo.getRangeType());
         couponInfo.setAmount(couponRuleVo.getAmount());
         couponInfo.setConditionAmount(couponRuleVo.getConditionAmount());

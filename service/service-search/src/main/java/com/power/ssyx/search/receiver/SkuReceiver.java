@@ -10,9 +10,13 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Powerveil
@@ -47,6 +51,24 @@ public class SkuReceiver {
         if (!Objects.isNull(skuId)) {
             // 调用方法商品下架
             skuService.lowerSku(skuId);
+        }
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = MqConst.QUEUE_GOODS_LOWER, durable = "true"),
+            exchange = @Exchange(value = MqConst.EXCHANGE_GOODS_DIRECT),
+            key = {MqConst.ROUTING_GOODS_LOWER}
+    ))
+    public void lowerBatch(String idsStr, Message message, Channel channel) throws IOException {
+        if (StringUtils.hasText(idsStr)) {
+            List<Long> idsList = Arrays.asList(idsStr.split(",")).stream()
+                    .map(s -> Long.parseLong(s.trim()))
+                    .collect(Collectors.toList());
+            // 调用方法商品下架
+            for (Long skuId : idsList) {
+                skuService.lowerSku(skuId);
+            }
         }
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
