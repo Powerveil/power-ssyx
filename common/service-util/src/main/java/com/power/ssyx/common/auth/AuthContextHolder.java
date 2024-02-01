@@ -43,4 +43,9 @@ public class AuthContextHolder {
         return userLoginVo.get();
     }
 
+    public static void clear() {
+        userId.remove();
+        wareId.remove();
+        userLoginVo.remove();
+    }
 }

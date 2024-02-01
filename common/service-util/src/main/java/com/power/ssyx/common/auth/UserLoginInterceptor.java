@@ -31,6 +31,12 @@ public class UserLoginInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        AuthContextHolder.clear();
+        HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
+    }
+
     private void getUserLoginVo(HttpServletRequest request) {
         // 从请求头中获取token
         String token = request.getHeader("token");
