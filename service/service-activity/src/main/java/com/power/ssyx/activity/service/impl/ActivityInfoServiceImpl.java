@@ -399,7 +399,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 Set<Long> currentActivitySkuIdSet = entry.getValue();
                 // 记录有活动的skuId
                 activitySkuIdSet.addAll(currentActivitySkuIdSet);
-
+                // 获取当前活动对应的购物项列表 （原来的购物车List有的参加了活动，有的没有参加）
                 List<CartInfo> currentActivityCartInfoList = cartInfoList.stream().filter(item -> {
                     return currentActivitySkuIdSet.contains(item.getSkuId());
                 }).collect(Collectors.toList());
@@ -408,7 +408,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 
                 int activityTotalNum = this.computeCartNum(currentActivityCartInfoList);
 
-                // 计算火鬃对应规则
+                // 计算活动对应规则
                 // 根据activityId获取活动对应规则
                 List<ActivityRule> currentActivityRuleList =
                         activityIdToActivityRuleListMap.get(entry.getKey());
@@ -419,6 +419,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                     Collections.sort(currentActivityRuleList, new Comparator<ActivityRule>() {
                         @Override
                         public int compare(ActivityRule o1, ActivityRule o2) {
+                            // 根绝优惠金额从大到小进行排序
                             return o2.getBenefitAmount().compareTo(o1.getBenefitAmount());
                         }
                     });
@@ -427,10 +428,10 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 ActivityType activityType = currentActivityRuleList.get(0).getActivityType();
                 // 判断活动类型：满减和打折
                 ActivityRule activityRule = null;
-                // TODO 规则没有最好只有最想让用户看到什么
-                if (ActivityType.FULL_REDUCTION.equals(activityType)) {//满减
+                // 规则没有最好只有最想让用户看到什么
+                if (ActivityType.FULL_REDUCTION.equals(activityType)) { //满减
                     activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
-                } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) {//满量
+                } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) { //满量
                     activityRule = this.computeFullDiscount(activityTotalNum, activityTotalAmount, currentActivityRuleList);
                 }
 
@@ -501,6 +502,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 BigDecimal reduceAmount = totalAmount.subtract(skuDiscountTotalAmount);
                 activityRule.setReduceAmount(reduceAmount);
                 optimalActivityRule = activityRule;
+                // 默认只能使用一次优惠
                 break;
             }
         }
@@ -549,11 +551,12 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 //优惠后减少金额
                 activityRule.setReduceAmount(activityRule.getBenefitAmount());
                 optimalActivityRule = activityRule;
+                // 默认只能使用一次
                 break;
             }
         }
         if (null == optimalActivityRule) {
-            //如果没有满足条件的取最小满足条件的一项
+            // 如果没有满足条件的取最小满足条件的一项 （这里显示给用户还差多少元就可以使用优惠）
             optimalActivityRule = activityRuleList.get(activityRuleList.size() - 1);
             optimalActivityRule.setReduceAmount(new BigDecimal("0"));
             optimalActivityRule.setSelectType(1);

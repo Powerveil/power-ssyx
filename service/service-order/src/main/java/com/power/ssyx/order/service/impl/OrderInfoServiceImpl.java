@@ -115,7 +115,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         // 第二步 订单不能重复提交，重复提交验证
         // 通过redis + Lua脚本进行判断
-        //// Lua脚本保证原子性操作
+        //// Lua脚本保证原子性操作（通过Lua脚本在Redis中执行两个操作（查询和删除）的组合，确保了这两个操作的原子性。）
         // 1.获取传递过来的订单 orderNo
         String orderNo = orderParamVo.getOrderNo();
         if (!StringUtils.hasText(orderNo)) {
@@ -207,11 +207,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 ActivityRule activityRule = cartInfoVo.getActivityRule();
                 List<CartInfo> cartInfoList = cartInfoVo.getCartInfoList();
                 if (null != activityRule) {
+                    String activityPrefix = "activity:";
                     //优惠金额， 按比例分摊
                     BigDecimal reduceAmount = activityRule.getReduceAmount();
                     activityReduceAmount = activityReduceAmount.add(reduceAmount);
                     if (cartInfoList.size() == 1) {
-                        activitySplitAmountMap.put("activity:" + cartInfoList.get(0).getSkuId(), reduceAmount);
+                        activitySplitAmountMap.put(activityPrefix + cartInfoList.get(0).getSkuId(), reduceAmount);
                     } else {
                         //总金额
                         BigDecimal originalTotalAmount = new BigDecimal(0);
@@ -221,39 +222,30 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                         }
                         //记录除最后一项是所有分摊金额， 最后一项=总的 - skuPartReduceAmount
                         BigDecimal skuPartReduceAmount = new BigDecimal(0);
-                        if (activityRule.getActivityType() == ActivityType.FULL_REDUCTION) {
-                            for (int i = 0, len = cartInfoList.size(); i < len; i++) {
-                                CartInfo cartInfo = cartInfoList.get(i);
-                                if (i < len - 1) {
-                                    BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
-                                    //sku分摊金额
-                                    BigDecimal skuReduceAmount = skuTotalAmount.divide(originalTotalAmount, 2, RoundingMode.HALF_UP).multiply(reduceAmount);
-                                    activitySplitAmountMap.put("activity:" + cartInfo.getSkuId(), skuReduceAmount);
 
-                                    skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
+                        // 满减处理逻辑：将使用满减的每个skuId都显示自己优惠的金额
+                        for (int i = 0, len = cartInfoList.size(); i < len; i++) {
+                            CartInfo cartInfo = cartInfoList.get(i);
+                            if (i < len - 1) {
+                                BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
+                                //sku分摊金额
+                                BigDecimal skuReduceAmount = null;
+                                if (activityRule.getActivityType() == ActivityType.FULL_REDUCTION) {
+                                    skuReduceAmount = skuTotalAmount.divide(originalTotalAmount, 2, RoundingMode.HALF_UP).multiply(reduceAmount);
                                 } else {
-                                    BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
-                                    activitySplitAmountMap.put("activity:" + cartInfo.getSkuId(), skuReduceAmount);
-                                }
-                            }
-                        } else {
-                            for (int i = 0, len = cartInfoList.size(); i < len; i++) {
-                                CartInfo cartInfo = cartInfoList.get(i);
-                                if (i < len - 1) {
-                                    BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
-
-                                    //sku分摊金额
                                     BigDecimal skuDiscountTotalAmount = skuTotalAmount.multiply(activityRule.getBenefitDiscount().divide(new BigDecimal("10")));
-                                    BigDecimal skuReduceAmount = skuTotalAmount.subtract(skuDiscountTotalAmount);
-                                    activitySplitAmountMap.put("activity:" + cartInfo.getSkuId(), skuReduceAmount);
-
-                                    skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
-                                } else {
-                                    BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
-                                    activitySplitAmountMap.put("activity:" + cartInfo.getSkuId(), skuReduceAmount);
+                                    skuReduceAmount = skuTotalAmount.subtract(skuDiscountTotalAmount);
                                 }
+
+                                activitySplitAmountMap.put(activityPrefix + cartInfo.getSkuId(), skuReduceAmount);
+
+                                skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
+                            } else {
+                                BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
+                                activitySplitAmountMap.put(activityPrefix + cartInfo.getSkuId(), skuReduceAmount);
                             }
                         }
+
                     }
                 }
             }
@@ -282,9 +274,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             }
             //优惠券优化总金额
             BigDecimal reduceAmount = couponInfo.getAmount();
+            String prefix = "coupon:";
             if (skuIdList.size() == 1) {
                 //sku的优化金额
-                couponInfoSplitAmountMap.put("coupon:" + skuIdToCartInfoMap.get(skuIdList.get(0)).getSkuId(), reduceAmount);
+                couponInfoSplitAmountMap.put(prefix + skuIdToCartInfoMap.get(skuIdList.get(0)).getSkuId(), reduceAmount);
             } else {
                 //总金额
                 BigDecimal originalTotalAmount = new BigDecimal(0);
@@ -302,12 +295,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                             BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
                             //sku分摊金额
                             BigDecimal skuReduceAmount = skuTotalAmount.divide(originalTotalAmount, 2, RoundingMode.HALF_UP).multiply(reduceAmount);
-                            couponInfoSplitAmountMap.put("coupon:" + cartInfo.getSkuId(), skuReduceAmount);
+                            couponInfoSplitAmountMap.put(prefix + cartInfo.getSkuId(), skuReduceAmount);
 
                             skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
                         } else {
                             BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
-                            couponInfoSplitAmountMap.put("coupon:" + cartInfo.getSkuId(), skuReduceAmount);
+                            couponInfoSplitAmountMap.put(prefix + cartInfo.getSkuId(), skuReduceAmount);
                         }
                     }
                 }
@@ -331,7 +324,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
 
         // 计算金额
-        // TODO 营销活动 和 优惠卷 金额
         Map<String, BigDecimal> activitySplitAmount = this.computeActivitySplitAmount(cartInfoList);
         // 优惠卷金额
         // orderParamVo是带有的couponId
@@ -345,7 +337,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
             orderItem.setId(null);
             orderItem.setCategoryId(cartInfo.getCategoryId());
-            if (cartInfo.getSkuType() == SkuType.COMMON.getCode()) {
+            if (SkuType.COMMON.getCode().equals(cartInfo.getSkuType())) {
                 orderItem.setSkuType(SkuType.COMMON);
             } else {
                 orderItem.setSkuType(SkuType.SECKILL);

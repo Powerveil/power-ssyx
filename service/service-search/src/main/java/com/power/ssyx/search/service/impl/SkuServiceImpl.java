@@ -153,15 +153,14 @@ public class SkuServiceImpl implements SkuService {
     // 更新商品热度
     @Override
     public Boolean incrHotScore(Long skuId) {
-        // redis把欧尼数据，每次+1
-        String value = "skuId:" + skuId;
+        // 使用RedisTemplate操作ZSet，每次将指定SKU的热度值增加1
         Double hotScore =
                 redisTemplate.opsForZSet().incrementScore(RedisConst.HOT_SCORE_KEY,
-                        RedisConst.SKU_ID_KEY_PREFIX,
+                        RedisConst.SKU_ID_KEY_PREFIX + skuId,
                         1);
-        // 规则
+        // 根据规则判断是否触发热度值的更新
         if (hotScore % 10 == 0) {
-            // 更新es
+            // 如果热度值是10的倍数，则更新ES中对应SKU的热度值
             Optional<SkuEs> optional = skuRepository.findById(skuId);
             SkuEs skuEs = optional.get();
             skuEs.setHotScore(Math.round(hotScore));

@@ -43,8 +43,13 @@ spring:
     time-zone: GMT+8
 
 #阿里云OSS
+#aliyun:
+#  endpoint: oss-cn-beijing.aliyuncs.com
+#  keyid: xxxxxxxx
+#  keysecret: xxxxxxxx
+#  bucketname: ssyx-power
 aliyun:
   endpoint: oss-cn-beijing.aliyuncs.com
-  keyid: xxxxxxxx
-  keysecret: xxxxxxxx
+  keyid: LTAI5tHfh3QX4n48bor99ZZ2
+  keysecret: RtEPm6yxpBLncpQ4Wy0EJJim3CBchf
   bucketname: ssyx-power

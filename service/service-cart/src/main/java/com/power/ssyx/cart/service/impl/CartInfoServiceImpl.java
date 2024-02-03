@@ -106,7 +106,7 @@ public class CartInfoServiceImpl implements CartInfoService {
             cartInfo.setUserId(userId);
             cartInfo.setCartPrice(skuInfo.getPrice());
             cartInfo.setSkuNum(skuNum);
-            cartInfo.setCurrentBuyNum(skuNum);
+            cartInfo.setCurrentBuyNum(skuNum); // 预留字段
             cartInfo.setSkuType(SkuType.COMMON.getCode());
 //            cartInfo.setPerLimit(skuInfo.getPerLimit());
 //            cartInfo.setImgUrl(skuInfo.getImgUrl());
@@ -165,7 +165,7 @@ public class CartInfoServiceImpl implements CartInfoService {
                 .stream().map(item -> item.getSkuId().toString())
                 .collect(Collectors.toList());
 
-        for (String skuId : skuIds) {
+        for (String skuId : skuIds) { // 不能使用boundHashOperations.delete(skuIds)
             boundHashOperations.delete(skuId);
         }
 
@@ -184,7 +184,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     @Override
     public Result cartList() {
         List<CartInfo> cartInfoList = new ArrayList<>();
-        // 判断userId TODO 如果没有登录，就应该跳转到登录页面，而不是让他看空的购物车
+        // 判断userId
         Long userId = AuthContextHolder.getUserId();
         if (!Objects.isNull(userId)) {
             // 从redis获取购物车数据

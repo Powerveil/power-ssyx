@@ -374,7 +374,6 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
     @Override
     public Boolean updateCouponInfoUserStatus(Long couponId, Long userId, Long orderId) {
         int count = couponUseMapper.updateCouponInfoUserStatus(couponId, userId, orderId);
-
         return count > 0;
     }
 
@@ -421,7 +420,7 @@ public class CouponInfoServiceImpl extends ServiceImpl<CouponInfoMapper, CouponI
                     }
                 }
             }
-
+            // 将优惠券ID和对应的SKU ID列表放入Map中
             couponIdToSkuIdMap.put(couponId, new ArrayList<>(skuIdSet));
         }
 
