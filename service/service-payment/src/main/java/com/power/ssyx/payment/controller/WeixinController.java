@@ -33,7 +33,7 @@ public class WeixinController {
 
     // 查询订单支付状态
     @GetMapping("/queryPayStatus/{orderNo}")
-    public Result queryPayStatus(@PathVariable("orderNo") String orderNo) {
+    public Result queryPayStatus(@PathVariable("orderNo") String orderNo) throws InterruptedException {
         return weixinManager.queryPayStatus(orderNo);
     }
 }

@@ -27,16 +27,20 @@ public class WeixinManager {
 
     public Result createJsapi(@PathVariable("orderNo") String orderNo) {
         Map<String, String> map = weixinService.createJsapi(orderNo);
-
-        return Result.ok(null);
+        return Result.ok(map);
     }
 
     // 查询订单支付状态
-    public Result queryPayStatus(@PathVariable("orderNo") String orderNo) {
-        // 1.调用微信支付系统接口查询订单支付状态
-        Map<String, String> resultMap = weixinService.queryPayStatus(orderNo);
+    public Result queryPayStatus(@PathVariable("orderNo") String orderNo) throws InterruptedException {
+        Map<String, String> resultMap = null;
+        for (int i = 0; i < 3; i++) {
+            // 1.调用微信支付系统接口查询订单支付状态
+            resultMap = weixinService.queryPayStatus(orderNo);
 
-        // 2.微信支付系统返回值为null，支付失败
+            // 2.微信支付系统返回值为null，支付失败
+            if (!Objects.isNull(resultMap)) break;
+            Thread.sleep(20);
+        }
         if (Objects.isNull(resultMap)) {
             return Result.build(null, ResultCodeEnum.PAYMENT_FAIL);
         }

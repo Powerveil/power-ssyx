@@ -63,9 +63,9 @@
     <!--解锁库存-->
     <update id="unlockStock">
         update sku_info
-        set lock_stock = lock_stock - #{skuNum} for
+        set lock_stock = lock_stock - #{skuNum}
+        where id = #{skuId} for
         update
-        where id = #{skuId}
     </update>
     <!--行锁-->
     <select id="checkStock" resultMap="BaseResultMap">
