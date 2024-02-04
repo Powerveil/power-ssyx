@@ -51,4 +51,6 @@ public class RedisConst {
 
     // 更新商品热度value前缀
     public static final String SKU_ID_KEY_PREFIX = "skuId:";
+
+    public static final String FILE_UPLOAD_BLACK_LIST_KEY_PREFIX = "upload:blacklist:";
 }

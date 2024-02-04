@@ -59,7 +59,8 @@ public enum ResultCodeEnum {
     ATTR_NAME_IS_BLANK(290, "商品属性名称不嫩为空"),
     ATTR_IS_EXIST(291, "商品属性名称已存在，不能使用该商品属性名称"),
 
-    IMAGE_UPLOAD_LIMIT(29501, "图片上传太频繁");
+    IMAGE_UPLOAD_LIMIT(29501, "图片上传太频繁"),
+    IMAGE_UPLOAD_BLACKLIST(29502, "您暂时受限上传图片，请稍后再试");
 
     private Integer code;
 

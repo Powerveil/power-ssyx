@@ -2,6 +2,7 @@ package com.power.ssyx.product.aop;
 
 import com.github.benmanes.caffeine.cache.*;
 import com.power.ssyx.annotation.SystemLimit;
+import com.power.ssyx.common.constant.RedisConst;
 import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.contants.SystemLimitConstants;
@@ -13,6 +14,8 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -29,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 @Aspect
 @Slf4j
 public class LimitImageUploadAspect {
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     // TODO 现在key比较单一，而且需要工具类方便管理缓存
     // key：用户id
@@ -69,7 +74,7 @@ public class LimitImageUploadAspect {
     // value：最近图片上传次数
     private Cache<String, Integer> IPCache =
             Caffeine.newBuilder()
-                    .maximumSize(3)
+                    .maximumSize(5000)
                     .recordStats()
 //                        .expireAfterWrite(5, TimeUnit.SECONDS)
                     .expireAfter(new Expiry<String, Integer>() {
@@ -132,7 +137,15 @@ public class LimitImageUploadAspect {
         SystemLimit systemLimit = getSystemLimit(joinPoint);
 
         String ip = request.getRemoteHost();
-
+        String queryKey = RedisConst.FILE_UPLOAD_BLACK_LIST_KEY_PREFIX + ip;
+        // 检查ip是否在黑名单中
+        Integer uploadBlacklistCount = (Integer) redisTemplate.opsForValue().get(queryKey);
+        if (!Objects.isNull(uploadBlacklistCount)) {
+            // todo 分布式锁
+//            int time = (uploadBlacklistCount / 10 + 1) * 120;
+//            redisTemplate.opsForValue().set(queryKey, 1, 120, TimeUnit.SECONDS);
+            throw new SsyxException(ResultCodeEnum.IMAGE_UPLOAD_BLACKLIST);
+        }
         // 检查用户最近上传文件的次数
 //        Long userId = AuthContextHolder.getUserId();
 //        Integer recentFileUploadCount = IPCache.getIfPresent(userId);
@@ -167,6 +180,10 @@ public class LimitImageUploadAspect {
             IPCache.policy().expireVariably()
                     .ifPresent(policy -> policy.put(ip, recentFileUploadCount + 1, timeCount, TimeUnit.SECONDS));
         } else {
+            // 上传受限，设置到黑名单中
+            // value为进入黑名单次数，过期时间为60秒
+            // todo 定时任务
+            redisTemplate.opsForValue().set(queryKey, 1, 120, TimeUnit.SECONDS);
             throw new SsyxException(ResultCodeEnum.IMAGE_UPLOAD_LIMIT);
         }
 
