@@ -2,10 +2,4 @@ spring:
   application:
     name: service-user
   profiles:
-    active: prod
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 192.168.18.129:8848
-      username:
-      password:
+    active: test

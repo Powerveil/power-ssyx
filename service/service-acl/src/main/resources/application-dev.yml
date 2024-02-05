@@ -6,6 +6,12 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      username: nacos
+      password: nacos
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver

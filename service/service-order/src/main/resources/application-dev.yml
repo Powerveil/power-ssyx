@@ -15,6 +15,12 @@ feign:
         connectTimeout: 30000 # 指定的是 消费者 连接服务提供者的连接超时时间 是否能连接  单位是毫秒
         readTimeout: 50000  # 指定的是调用服务提供者的 服务 的超时时间（）  单位是毫秒
 spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      username: nacos
+      password: nacos
   main:
     allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
   rabbitmq:
