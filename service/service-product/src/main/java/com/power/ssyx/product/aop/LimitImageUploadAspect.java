@@ -182,8 +182,10 @@ public class LimitImageUploadAspect {
         } else {
             // 上传受限，设置到黑名单中
             // value为进入黑名单次数，过期时间为60秒
-            // todo 定时任务
+            // 将ip加入黑名单
             redisTemplate.opsForValue().set(queryKey, 1, 120, TimeUnit.SECONDS);
+            // 删除Caffeine缓存
+            IPCache.invalidate(ip);
             throw new SsyxException(ResultCodeEnum.IMAGE_UPLOAD_LIMIT);
         }
 
