@@ -46,3 +46,4 @@ rebel.xml
 file/
 
 application-prod.yml
+application-test.yml
