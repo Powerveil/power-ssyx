@@ -36,7 +36,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
 
     @Override
     public Result getPageList(Integer page, Integer limit, AdminQueryVo adminQueryVo) {
-        if (ParamCheckUtils.validateParams(page, limit)) {
+        if (!ParamCheckUtils.validateParams(page, limit)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         Page<Admin> pageParam = new Page<>(page, limit);
@@ -140,7 +140,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     @Override
     @Transactional(rollbackFor = {Exception.class})
     public Result deleteAdminByIds(List<Long> ids) {
-        if (ParamCheckUtils.validateParams(ids)) {
+        if (!ParamCheckUtils.validateParams(ids)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         if (this.removeByIds(ids)) {

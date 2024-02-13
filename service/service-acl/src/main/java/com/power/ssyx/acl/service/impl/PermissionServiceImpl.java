@@ -115,7 +115,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     // TODO
     @Override
     public Result doAssign(Long roleId, Long[] permissionId) {
-        if (ParamCheckUtils.validateParams(roleId, permissionId)) {
+        if (!ParamCheckUtils.validateParams(roleId, permissionId)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         List<RolePermission> allPermissions = rolePermissionService.list();

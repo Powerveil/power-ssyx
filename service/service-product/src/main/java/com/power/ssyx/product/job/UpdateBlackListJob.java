@@ -31,5 +31,13 @@ public class UpdateBlackListJob {
         Set<String> keys =
                 redisTemplate.keys(RedisConst.FILE_UPLOAD_BLACK_LIST_KEY_PREFIX + "*");
         redisTemplate.delete(keys);
+//        // 暂时没有特定规则,就是定时删除所有的key
+//        ScanOptions options = ScanOptions.scanOptions().match(RedisConst.FILE_UPLOAD_BLACK_LIST_KEY_PREFIX + "*").build(); // 匹配指定前缀的所有键
+//        Set<String> keys = redisTemplate.keys(RedisConst.FILE_UPLOAD_BLACK_LIST_KEY_PREFIX + "*"); // 获取匹配的所有键
+//        if (keys != null && !keys.isEmpty()) {
+//            for (String key : keys) {
+//                redisTemplate.delete(key); // 逐个删除键
+//            }
+//        }
     }
 }

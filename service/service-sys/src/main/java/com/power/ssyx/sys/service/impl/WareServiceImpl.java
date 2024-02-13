@@ -27,7 +27,7 @@ public class WareServiceImpl extends ServiceImpl<WareMapper, Ware>
 
     @Override
     public Result getPageList(Integer page, Integer limit, WareQueryVo wareQueryVo) {
-        if (ParamCheckUtils.validateParams(page, limit)) {
+        if (!ParamCheckUtils.validateParams(page, limit)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
 
@@ -62,7 +62,7 @@ public class WareServiceImpl extends ServiceImpl<WareMapper, Ware>
     // 删除开通区域 removeById
     @Override
     public Result removeWareById(Long id) {
-        if (ParamCheckUtils.validateParams(id)) {
+        if (!ParamCheckUtils.validateParams(id)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         this.removeById(id);
@@ -72,7 +72,7 @@ public class WareServiceImpl extends ServiceImpl<WareMapper, Ware>
     // 批量删除开通区域
     @Override
     public Result deleteWareByIds(List<Long> ids) {
-        if (ParamCheckUtils.validateParams(ids)) {
+        if (!ParamCheckUtils.validateParams(ids)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         if (this.removeByIds(ids)) {

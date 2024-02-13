@@ -162,7 +162,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Transactional(rollbackFor = {Exception.class})
     @Override
     public Result saveAdminRole(Long adminId, Long[] roleId) {
-        if (ParamCheckUtils.validateParams(adminId, roleId)) {
+        if (!ParamCheckUtils.validateParams(adminId, roleId)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         LambdaQueryWrapper<AdminRole> queryWrapper = new LambdaQueryWrapper<>();

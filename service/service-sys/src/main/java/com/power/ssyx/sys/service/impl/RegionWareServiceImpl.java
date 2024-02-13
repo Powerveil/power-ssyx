@@ -32,7 +32,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
     // 获取开通区域列表
     @Override
     public Result getPageList(Integer page, Integer limit, RegionWareQueryVo regionWareQueryVo) {
-        if (ParamCheckUtils.validateParams(page, limit)) {
+        if (!ParamCheckUtils.validateParams(page, limit)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
 
@@ -67,7 +67,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
     // 删除开通区域 removeById
     @Override
     public Result removeRegionWareById(Long id) {
-        if (ParamCheckUtils.validateParams(id)) {
+        if (!ParamCheckUtils.validateParams(id)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         removeById(id);
@@ -77,7 +77,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
     // 更新开通区域状态 updateStatus
     @Override
     public Result updateStatus(Long id, Integer status) {
-        if (ParamCheckUtils.validateParams(id, status)) {
+        if (!ParamCheckUtils.validateParams(id, status)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         if (regionWareMapper.updateStatus(id, status) > 0) {
@@ -89,7 +89,7 @@ public class RegionWareServiceImpl extends ServiceImpl<RegionWareMapper, RegionW
     // 批量删除开通区域
     @Override
     public Result deleteRegionWareByIds(List<Long> ids) {
-        if (ParamCheckUtils.validateParams(ids)) {
+        if (!ParamCheckUtils.validateParams(ids)) {
             throw new SsyxException(ResultCodeEnum.PARAM_ERROR);
         }
         if (this.removeByIds(ids)) {
