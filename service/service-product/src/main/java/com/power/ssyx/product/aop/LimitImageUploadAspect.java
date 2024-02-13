@@ -14,6 +14,8 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -103,6 +105,9 @@ public class LimitImageUploadAspect {
                     })
                     .build();
 
+    @Autowired
+    private RedissonClient redissonClient;
+
     @Pointcut("@annotation(com.power.ssyx.annotation.SystemLimit)")
     public void pt() {
 
@@ -136,14 +141,29 @@ public class LimitImageUploadAspect {
         // 获取被增强方法上的注解对象
         SystemLimit systemLimit = getSystemLimit(joinPoint);
 
+        // 获取请求的远程主机地址
         String ip = request.getRemoteHost();
+        // 构建查询Redis黑名单的键值
         String queryKey = RedisConst.FILE_UPLOAD_BLACK_LIST_KEY_PREFIX + ip;
         // 检查ip是否在黑名单中
         Integer uploadBlacklistCount = (Integer) redisTemplate.opsForValue().get(queryKey);
-        if (!Objects.isNull(uploadBlacklistCount)) {
-            // todo 分布式锁
-//            int time = (uploadBlacklistCount / 10 + 1) * 120;
-//            redisTemplate.opsForValue().set(queryKey, 1, 120, TimeUnit.SECONDS);
+        if (!Objects.isNull(uploadBlacklistCount) && uploadBlacklistCount > 0) {
+            // 是防止两台JVM机器都来加锁（普通加锁只会在当前JVM机器上生效）
+            // 获取Redisson公平锁
+            RLock rLock = this.redissonClient
+                    .getFairLock(queryKey);
+            // 加锁
+            rLock.lock();
+            // 增加上传黑名单计数
+            uploadBlacklistCount++;
+            long timeCount = RedisConst.IMAGE_UPLOAD_BLACKLIST_TIMEOUT;
+            if (uploadBlacklistCount % 10 == 0) { // 如果上传黑名单计数能被10整除
+                timeCount *= (uploadBlacklistCount / 10 + 1); // 根据上传黑名单计数调整超时时间
+            }
+            // 将更新后的上传黑名单计数存入Redis，并设置超时时间
+            redisTemplate.opsForValue().set(queryKey, uploadBlacklistCount, timeCount, TimeUnit.SECONDS);
+            // 解锁
+            rLock.unlock(); // 解锁以释放锁资源
             throw new SsyxException(ResultCodeEnum.IMAGE_UPLOAD_BLACKLIST);
         }
         // 检查用户最近上传文件的次数
@@ -183,7 +203,7 @@ public class LimitImageUploadAspect {
             // 上传受限，设置到黑名单中
             // value为进入黑名单次数，过期时间为60秒
             // 将ip加入黑名单
-            redisTemplate.opsForValue().set(queryKey, 1, 120, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(queryKey, 1, RedisConst.IMAGE_UPLOAD_BLACKLIST_TIMEOUT, TimeUnit.SECONDS);
             // 删除Caffeine缓存
             IPCache.invalidate(ip);
             throw new SsyxException(ResultCodeEnum.IMAGE_UPLOAD_LIMIT);
