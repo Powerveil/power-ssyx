@@ -39,9 +39,9 @@ public class SkuApiController {
     }
 
     // 查询分类商品
-    @GetMapping("/{page}/{limit}")
-    public Result listSku(@PathVariable("page") Integer page,
-                          @PathVariable("limit") Integer limit,
+    @GetMapping("/{pagew}/{limitw}")
+    public Result listSku(@PathVariable("pagew") Integer page,
+                          @PathVariable("limitw") Integer limit,
                           SkuEsQueryVo skuEsQueryVo) {
         return skuService.search(page, limit, skuEsQueryVo);
     }
