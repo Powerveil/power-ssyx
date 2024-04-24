@@ -433,11 +433,13 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         String orderSkuKey = RedisConst.ORDER_SKU_MAP + orderParamVo.getUserId();
         BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
         cartInfoList.forEach(cartInfo -> {
+            Integer orderSkuNum = cartInfo.getSkuNum();
             if (hashOperations.hasKey(cartInfo.getSkuId().toString())) {
-                Integer orderSkuNum = hashOperations.get(cartInfo.getSkuId().toString()) + cartInfo.getSkuNum();
-                hashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
+                orderSkuNum += hashOperations.get(cartInfo.getSkuId().toString());
             }
+            hashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
         });
+        // 设置订单超时时间
         redisTemplate.expire(orderSkuKey, DateUtil.getCurrentExpireTimes(), TimeUnit.SECONDS);
 
         // 返回订单id
