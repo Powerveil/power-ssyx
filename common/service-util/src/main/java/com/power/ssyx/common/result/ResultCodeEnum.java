@@ -60,7 +60,9 @@ public enum ResultCodeEnum {
     ATTR_IS_EXIST(291, "商品属性名称已存在，不能使用该商品属性名称"),
 
     IMAGE_UPLOAD_LIMIT(29501, "图片上传太频繁"),
-    IMAGE_UPLOAD_BLACKLIST(29502, "您暂时受限上传图片，请稍后再试");
+    IMAGE_UPLOAD_BLACKLIST(29502, "您暂时受限上传图片，请稍后再试"),
+    // 购物车相关
+    CART_ADD_FAIL(29601, "购物车添加失败");
 
     private Integer code;
 

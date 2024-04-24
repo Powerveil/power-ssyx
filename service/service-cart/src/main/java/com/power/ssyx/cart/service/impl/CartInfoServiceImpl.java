@@ -19,7 +19,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -72,6 +75,7 @@ public class CartInfoServiceImpl implements CartInfoService {
             // 把购物车存在商品之前数量获取数量，在进行数量更新操作
             Integer currentSkuNum = cartInfo.getSkuNum() + skuNum;
             if (currentSkuNum < 1) {
+                // 从有到无删除购物项
                 hashOperations.delete(skuId.toString());
                 return Result.ok(null);
             }
@@ -86,9 +90,15 @@ public class CartInfoServiceImpl implements CartInfoService {
             cartInfo.setCurrentBuyNum(currentSkuNum);// 预留字段
 
             // 更新其他值
+            // todo 默认应该不选中
             cartInfo.setIsChecked(1);// 默认选中结算 （结算前的小对钩）
             cartInfo.setUpdateTime(new Date());
         } else {
+            if (skuNum <= 0) {
+                // 从无到无抛异常
+                throw new SsyxException(ResultCodeEnum.CART_ADD_FAIL);
+            }
+
             // 4.如果结果里面没有skuId，就是第一次添加
             // 4.1.直接添加
             // 远程调用根据skuId获取skuInfo
@@ -96,26 +106,20 @@ public class CartInfoServiceImpl implements CartInfoService {
             if (Objects.isNull(skuInfo)) {
                 throw new SsyxException(ResultCodeEnum.DATA_ERROR);
             }
-            skuNum = 1;
+            skuNum = 1; // 默认第一次添加数量为1
             // 封装cartInfo对象
             cartInfo = BeanCopyUtils.copyBean(skuInfo, CartInfo.class);
             cartInfo.setSkuId(skuId);
-//            cartInfo.setCategoryId(skuInfo.getCategoryId());
-//            cartInfo.setSkuType(skuInfo.getSkuType());
-//            cartInfo.setIsNewPerson(skuInfo.getIsNewPerson());
             cartInfo.setUserId(userId);
             cartInfo.setCartPrice(skuInfo.getPrice());
             cartInfo.setSkuNum(skuNum);
             cartInfo.setCurrentBuyNum(skuNum); // 预留字段
             cartInfo.setSkuType(SkuType.COMMON.getCode());
-//            cartInfo.setPerLimit(skuInfo.getPerLimit());
-//            cartInfo.setImgUrl(skuInfo.getImgUrl());
-//            cartInfo.setSkuName(skuInfo.getSkuName());
-//            cartInfo.setWareId(skuInfo.getWareId());
-            cartInfo.setIsChecked(1);
-            cartInfo.setStatus(1);
-            cartInfo.setCreateTime(new Date());
-            cartInfo.setUpdateTime(new Date());
+            // 下面四个字段数据库表设计的时候有默认值
+//            cartInfo.setIsChecked(1); // 默认设置选中
+//            cartInfo.setStatus(1); // 默认正常
+//            cartInfo.setCreateTime(new Date());
+//            cartInfo.setUpdateTime(new Date());
 
 
 //            cartInfo = new CartInfo();
@@ -165,24 +169,32 @@ public class CartInfoServiceImpl implements CartInfoService {
                 .stream().map(item -> item.getSkuId().toString())
                 .collect(Collectors.toList());
 
+        this.batchDelete(skuIds, boundHashOperations);
+
+        return Result.ok(null);
+    }
+
+    private void batchDelete(List<String> skuIds, BoundHashOperations<String, String, CartInfo> boundHashOperations) {
         for (String skuId : skuIds) { // 不能使用boundHashOperations.delete(skuIds)
             boundHashOperations.delete(skuId);
         }
-
-        return Result.ok(null);
     }
 
     @Override
     public Result batchDeleteCart(List<Long> skuIds) {
         BoundHashOperations<String, String, CartInfo> boundHashOperations = getCartBoundHashOperations();
-        for (Long skuId : skuIds) {
-            boundHashOperations.delete(skuId.toString());
-        }
+        List<String> collect = skuIds.stream().map(Object::toString).collect(Collectors.toList());
+        this.batchDelete(collect, boundHashOperations);
         return Result.ok(null);
     }
 
     @Override
     public Result cartList() {
+        List<CartInfo> cartInfoList = this.getCartInfos();
+        return Result.ok(cartInfoList);
+    }
+
+    private List<CartInfo> getCartInfos() {
         List<CartInfo> cartInfoList = new ArrayList<>();
         // 判断userId
         Long userId = AuthContextHolder.getUserId();
@@ -192,15 +204,10 @@ public class CartInfoServiceImpl implements CartInfoService {
             cartInfoList = boundHashOperations.values();
             if (!CollectionUtils.isEmpty(cartInfoList)) {
                 // 根据商品添加时间，降序
-                Collections.sort(cartInfoList, new Comparator<CartInfo>() {
-                    @Override
-                    public int compare(CartInfo o1, CartInfo o2) {
-                        return o2.getCreateTime().compareTo(o1.getCreateTime());
-                    }
-                });
+                cartInfoList.sort((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime()));
             }
         }
-        return Result.ok(cartInfoList);
+        return cartInfoList;
     }
 
     /**
@@ -212,7 +219,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     public Result activityCartList() {
         // 有点烂的代码
         Long userId = AuthContextHolder.getUserId();
-        List<CartInfo> cartInfoList = (List<CartInfo>) this.cartList().getData();
+        List<CartInfo> cartInfoList = this.getCartInfos();
         OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
         return Result.ok(orderConfirmVo);
     }

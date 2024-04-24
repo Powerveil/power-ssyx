@@ -31,10 +31,10 @@
 
     <update id="updateCouponInfoUserStatus">
         update coupon_use
-        set coupon_status = 2
+        set coupon_status = 2,
+            order_id      = #{orderId}
         where coupon_id = #{couponId}
           and user_id = #{userId}
-          and order_id = #{orderId}
           and is_deleted = 0
     </update>
 </mapper>

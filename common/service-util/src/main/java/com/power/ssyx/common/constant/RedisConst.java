@@ -24,7 +24,7 @@ public class RedisConst {
 
     public static final String USER_KEY_PREFIX = "user:";
     public static final String USER_CART_KEY_SUFFIX = ":cart";
-    public static final long USER_CART_EXPIRE = 60 * 60 * 24;
+    public static final long USER_CART_EXPIRE = 60 * 60 * 24; // 24小时
     public static final String STOCK_INFO = "stock:info:";
     public static final String ORDER_REPEAT = "order:repeat:";
 

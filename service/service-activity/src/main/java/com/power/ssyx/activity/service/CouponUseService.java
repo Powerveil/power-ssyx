@@ -1,6 +1,7 @@
 package com.power.ssyx.activity.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.activity.CouponUse;
 
 /**
@@ -10,4 +11,6 @@ import com.power.ssyx.model.activity.CouponUse;
  */
 public interface CouponUseService extends IService<CouponUse> {
 
+    // 获取优惠卷
+    Result receiveCoupon(Long id);
 }
