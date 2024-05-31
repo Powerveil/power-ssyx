@@ -32,12 +32,13 @@ import com.power.ssyx.vo.order.OrderSubmitVo;
 import com.power.ssyx.vo.order.OrderUserQueryVo;
 import com.power.ssyx.vo.product.SkuStockLockVo;
 import com.power.ssyx.vo.user.LeaderAddressVo;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -81,6 +82,11 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Autowired
     private OrderItemService orderItemService;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    private OrderInfoService orderInfoServiceProxy;
+
 
     @Override
     public Result confirmOrder() {
@@ -108,6 +114,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return Result.ok(orderConfirmVo);
     }
 
+    /**
+     * 提交订单
+     *
+     * @param orderParamVo
+     * @return
+     */
     @Override
     public Result submitOrder(OrderSubmitVo orderParamVo) {
         // 获取到用户Id
@@ -197,10 +209,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private Map<String, BigDecimal> computeActivitySplitAmount(List<CartInfo> cartInfoParamList) {
         Map<String, BigDecimal> activitySplitAmountMap = new HashMap<>();
 
-        //促销活动相关信息
+        // 促销活动相关信息
         List<CartInfoVo> cartInfoVoList = activityFeignClient.findCartActivityList(cartInfoParamList);
 
-        //活动总金额
+        // 活动总金额
         BigDecimal activityReduceAmount = new BigDecimal(0);
         if (!CollectionUtils.isEmpty(cartInfoVoList)) {
             for (CartInfoVo cartInfoVo : cartInfoVoList) {
@@ -208,35 +220,43 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 List<CartInfo> cartInfoList = cartInfoVo.getCartInfoList();
                 if (null != activityRule) {
                     String activityPrefix = "activity:";
-                    //优惠金额， 按比例分摊
+                    // 优惠金额， 按比例分摊
                     BigDecimal reduceAmount = activityRule.getReduceAmount();
                     activityReduceAmount = activityReduceAmount.add(reduceAmount);
                     if (cartInfoList.size() == 1) {
                         activitySplitAmountMap.put(activityPrefix + cartInfoList.get(0).getSkuId(), reduceAmount);
                     } else {
-                        //总金额
+                        // 总金额
                         BigDecimal originalTotalAmount = new BigDecimal(0);
                         for (CartInfo cartInfo : cartInfoList) {
-                            BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
+                            BigDecimal skuTotalAmount = cartInfo.getCartPrice()
+                                    .multiply(new BigDecimal(cartInfo.getSkuNum()));
                             originalTotalAmount = originalTotalAmount.add(skuTotalAmount);
                         }
-                        //记录除最后一项是所有分摊金额， 最后一项=总的 - skuPartReduceAmount
+                        // 记录除最后一项是所有分摊金额， 最后一项=总的 - skuPartReduceAmount
                         BigDecimal skuPartReduceAmount = new BigDecimal(0);
-
                         // 满减处理逻辑：将使用满减的每个skuId都显示自己优惠的金额
                         for (int i = 0, len = cartInfoList.size(); i < len; i++) {
                             CartInfo cartInfo = cartInfoList.get(i);
                             if (i < len - 1) {
-                                BigDecimal skuTotalAmount = cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum()));
-                                //sku分摊金额
+                                // 单个sku总额
+                                BigDecimal skuTotalAmount = cartInfo.getCartPrice()
+                                        .multiply(new BigDecimal(cartInfo.getSkuNum()));
+                                // sku分摊金额 例如，100 中 分摊 2
+                                // 满额
                                 BigDecimal skuReduceAmount = null;
                                 if (activityRule.getActivityType() == ActivityType.FULL_REDUCTION) {
-                                    skuReduceAmount = skuTotalAmount.divide(originalTotalAmount, 2, RoundingMode.HALF_UP).multiply(reduceAmount);
+                                    skuReduceAmount = skuTotalAmount // 单个sku总额 / 原总额  * 优惠金额
+                                            .divide(originalTotalAmount, 2, RoundingMode.HALF_UP)
+                                            .multiply(reduceAmount);
                                 } else {
-                                    BigDecimal skuDiscountTotalAmount = skuTotalAmount.multiply(activityRule.getBenefitDiscount().divide(new BigDecimal("10")));
+                                    // 满减
+                                    BigDecimal skuDiscountTotalAmount = skuTotalAmount
+                                            .multiply(activityRule.getBenefitDiscount()
+                                                    .divide(new BigDecimal("10")));
                                     skuReduceAmount = skuTotalAmount.subtract(skuDiscountTotalAmount);
                                 }
-
+                                // 存入map <activity:skuId, skuReduceAmount>
                                 activitySplitAmountMap.put(activityPrefix + cartInfo.getSkuId(), skuReduceAmount);
 
                                 skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
@@ -310,7 +330,14 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return couponInfoSplitAmountMap;
     }
 
-    @Transactional(rollbackFor = {Exception.class})
+    /**
+     * 订单入库
+     *
+     * @param orderParamVo
+     * @param cartInfoList
+     * @return 订单编号
+     */
+//    @Transactional(rollbackFor = {Exception.class})
     public Long saveOrder(OrderSubmitVo orderParamVo, List<CartInfo> cartInfoList) {
         if (CollectionUtils.isEmpty(cartInfoList)) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
@@ -394,42 +421,49 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderInfo.setCouponId(orderParamVo.getCouponId());
 
 
-        //计算订单金额
+        // 计算订单金额
         BigDecimal originalTotalAmount = this.computeTotalAmount(cartInfoList);
         BigDecimal activityAmount = activitySplitAmount.get("activity:total");
         if (null == activityAmount) activityAmount = new BigDecimal(0);
         BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:total");
         if (null == couponAmount) couponAmount = new BigDecimal(0);
         BigDecimal totalAmount = originalTotalAmount.subtract(activityAmount).subtract(couponAmount);
-        //计算订单金额
+        // 计算订单金额
         orderInfo.setOriginalTotalAmount(originalTotalAmount);
         orderInfo.setActivityAmount(activityAmount);
         orderInfo.setCouponAmount(couponAmount);
         orderInfo.setTotalAmount(totalAmount);
 
-        //计算团长佣金
-        BigDecimal profitRate = new BigDecimal(0); //orderSetService.getProfitRate();
+        // 计算团长佣金
+        BigDecimal profitRate = new BigDecimal(0); // orderSetService.getProfitRate();
         BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
         orderInfo.setCommissionAmount(commissionAmount);
 
         // 添加数据到订单基本信息表
         // order_info order_item TODO order_log暂时没有添加
-        baseMapper.insert(orderInfo);
-
+//        baseMapper.insert(orderInfo);
         // 保存
         for (OrderItem orderItem : orderItemList) {
             orderItem.setOrderId(orderInfo.getId());
         }
-        orderItemService.saveBatch(orderItemList);
+        orderInfoServiceProxy = (OrderInfoService) AopContext.currentProxy();
 
+        // 缩小事务的粒度
+        transactionTemplate.execute(status -> {
+            orderInfoServiceProxy.save(orderInfo);
+            orderItemService.saveBatch(orderItemList);
+            return Boolean.TRUE;
+        });
 
         // 如果当前订单使用优惠卷，更新优惠卷状态
+        // todo 这里的事务怎么处理？
         if (!Objects.isNull(orderInfo.getCouponId())) {
             // 这个订单id是自增的(orderId)，不是那个orderNo
             activityFeignClient.updateCouponInfoUserStatus(orderInfo.getCouponId(), userId, orderInfo.getId());
         }
 
         // 下单成功，记录用户购物商品数量，redis
+        // todo 这里需要考虑订单超时后，这些存入数据是有问题的，需要取出来，考虑用另一个key临时存放
         String orderSkuKey = RedisConst.ORDER_SKU_MAP + orderParamVo.getUserId();
         BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
         cartInfoList.forEach(cartInfo -> {
@@ -441,9 +475,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         });
         // 设置订单超时时间
         redisTemplate.expire(orderSkuKey, DateUtil.getCurrentExpireTimes(), TimeUnit.SECONDS);
-
         // 返回订单id
-
         return orderInfo.getId();
     }
 

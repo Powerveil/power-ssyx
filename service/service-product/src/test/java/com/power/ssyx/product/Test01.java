@@ -55,4 +55,41 @@ public class Test01 {
         int check = skuInfoMapper.check(14L, 1);
         log.info("更改是否成功:{}", check);
     }
+
+//    @ParameterizedTest
+//    @CsvSource({"1,2,3", "3,4,7"})
+//    public void testAdd(int a, int b, int c) {
+//        long begin = System.currentTimeMillis();
+//        Caculator caculator = new Caculator();
+//        int add = caculator.add(a, b);
+//        assert add == c;
+//        long end = System.currentTimeMillis();
+//        assert end - begin < 100;
+//    }
+//
+//    @ParameterizedTest
+//    @CsvSource({"2,1,1", "5,3,2"})
+//    public void testSubstract(int a, int b, int c) {
+//        Caculator caculator = new Caculator();
+//        int subtract = caculator.subtract(a, b);
+//        assert subtract == c;
+//    }
+//
+//    @ParameterizedTest
+//    @CsvSource({"2,1,2", "2,3,4"})
+//    public void testMultiply(int a, int b, double c) {
+//        Caculator caculator = new Caculator();
+//        double multiply = caculator.multiply(a, b);
+//        assert multiply == c;
+//    }
+//
+//    @ParameterizedTest
+//    @CsvSource({"2,1,2", "6,3,2"})
+//    public void testDivide(int a, int b, double c) throws Exception {
+//        Caculator caculator = new Caculator();
+//        double divide = caculator.divide(a, b);
+//        assert divide == c;
+//    }
+
+
 }

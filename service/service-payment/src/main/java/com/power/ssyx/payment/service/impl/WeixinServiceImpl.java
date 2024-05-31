@@ -46,7 +46,7 @@ public class WeixinServiceImpl implements WeixinService {
 
         // 2.封装微信支付系统接口需要参数
         Map<String, String> paramMap = new HashMap<>();
-        //1、设置参数
+        // 1.设置参数
         paramMap.put("appid", ConstantPropertiesUtils.APPID);
         paramMap.put("mch_id", ConstantPropertiesUtils.PARTNER);
         paramMap.put("nonce_str", WXPayUtil.generateNonceStr());

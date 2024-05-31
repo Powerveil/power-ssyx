@@ -1,0 +1,155 @@
+    public Result activityCartList() {
+        Long userId = AuthContextHolder.getUserId();
+        List<CartInfo> cartInfoList = this.getCartInfos();
+        OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
+        return Result.ok(orderConfirmVo);
+    }
+    private List<CartInfo> getCartInfos() {
+        List<CartInfo> cartInfoList = new ArrayList<>();
+        Long userId = AuthContextHolder.getUserId();
+        if (!Objects.isNull(userId)) {
+            BoundHashOperations<String, String, CartInfo> boundHashOperations = getCartBoundHashOperations();
+            cartInfoList = boundHashOperations.values();
+            if (!CollectionUtils.isEmpty(cartInfoList)) {
+                cartInfoList.sort((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime()));
+            }
+        }
+        return cartInfoList;
+    }
+    public OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId) {
+        List<CartInfoVo> cartInfoVoList = this.findCartActivityList(cartInfoList);
+        BigDecimal activityReduceAmount = cartInfoVoList.stream()
+                .filter(item -> !Objects.isNull(item.getActivityRule())) // 对没有规则的数据进行过滤
+                .map(item -> item.getActivityRule().getReduceAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<CouponInfo> couponInfoList = couponInfoService.findCartCouponInfo(cartInfoList, userId);
+        BigDecimal couponReduceAmount = new BigDecimal(0);
+        if (!CollectionUtils.isEmpty(couponInfoList)) {
+            couponReduceAmount = couponInfoList.stream()
+                    .filter(couponInfo -> couponInfo.getIsOptimal() == 1) // 是否最优选项
+                    .map(CouponInfo::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        BigDecimal originalTotalAmount = cartInfoList.stream()
+                .filter(cartInfo -> SystemConstants.IS_SELECTED.equals(cartInfo.getIsChecked()))
+                .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal toTalAmount = originalTotalAmount.subtract(activityReduceAmount).subtract(couponReduceAmount);
+        OrderConfirmVo orderTradeVo = new OrderConfirmVo();
+        orderTradeVo.setCarInfoVoList(cartInfoVoList);
+        orderTradeVo.setActivityReduceAmount(activityReduceAmount);
+        orderTradeVo.setCouponInfoList(couponInfoList);
+        orderTradeVo.setCouponReduceAmount(couponReduceAmount);
+        orderTradeVo.setOriginalTotalAmount(originalTotalAmount);
+        orderTradeVo.setTotalAmount(toTalAmount);
+        return orderTradeVo;
+    }
+    public List<CartInfoVo> findCartActivityList(List<CartInfo> cartInfoList) {
+        List<CartInfoVo> cartInfoVoList = new ArrayList<>();
+        List<Long> skuIds = cartInfoList.stream()
+                .map(CartInfo::getSkuId)
+                .collect(Collectors.toList());
+        List<ActivitySku> activitySkuList = baseMapper.selectCartActivity(skuIds);
+        Map<Long, Set<Long>> activityIdToSkuIdListMap = activitySkuList.stream()
+                .collect(Collectors.groupingBy(ActivitySku::getActivityId,
+                            Collectors.mapping(ActivitySku::getSkuId, Collectors.toSet())));
+        Map<Long, List<ActivityRule>> activityIdToActivityRuleListMap =
+                new HashMap<>();
+        Set<Long> activityIdList = activitySkuList.stream()
+                .map(ActivitySku::getActivityId)
+                .collect(Collectors.toSet());
+        if (!CollectionUtils.isEmpty(activityIdList)) {
+            LambdaQueryWrapper<ActivityRule> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.orderByDesc(ActivityRule::getConditionAmount, ActivityRule::getConditionNum);
+            queryWrapper.in(ActivityRule::getActivityId, activityIdList);
+            List<ActivityRule> activityRuleList = activityRuleMapper.selectList(queryWrapper);
+            activityIdToActivityRuleListMap = activityRuleList.stream()
+                    .collect(Collectors.groupingBy(ActivityRule::getActivityId));
+        }
+        Set<Long> activitySkuIdSet = new HashSet<>();
+        if (!Objects.isNull(activityIdToSkuIdListMap)) {
+            Set<Map.Entry<Long, Set<Long>>> entries = activityIdToSkuIdListMap.entrySet();
+            for (Map.Entry<Long, Set<Long>> entry : entries) {
+                Set<Long> currentActivitySkuIdSet = entry.getValue();
+                activitySkuIdSet.addAll(currentActivitySkuIdSet);
+                List<CartInfo> currentActivityCartInfoList =
+                        cartInfoList.stream()
+                                .filter(item -> currentActivitySkuIdSet.contains(item.getSkuId()))
+                                .collect(Collectors.toList());
+                BigDecimal activityTotalAmount = this.computeTotalAmount(currentActivityCartInfoList);
+                int activityTotalNum = this.computeCartNum(currentActivityCartInfoList);
+                List<ActivityRule> currentActivityRuleList =
+                        activityIdToActivityRuleListMap.get(entry.getKey());
+                if (!CollectionUtils.isEmpty(currentActivityRuleList) && currentActivityRuleList.size() >= 2) {
+                    currentActivityRuleList.sort((o1, o2) -> {
+                        return o2.getBenefitAmount().compareTo(o1.getBenefitAmount());
+                    });
+                }
+                ActivityType activityType = currentActivityRuleList.get(0).getActivityType();
+                ActivityRule activityRule = null;
+                if (ActivityType.FULL_REDUCTION.equals(activityType)) { // 满减
+                    activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
+                } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) { // 满量
+                    activityRule = this.computeFullDiscount(activityTotalNum, activityTotalAmount, currentActivityRuleList);
+                }
+                CartInfoVo cartInfoVo = new CartInfoVo();
+                cartInfoVo.setCartInfoList(currentActivityCartInfoList);
+                cartInfoVo.setActivityRule(activityRule);
+                cartInfoVoList.add(cartInfoVo);
+            }
+        }
+        skuIds.removeAll(activitySkuIdSet);
+        Map<Long, CartInfo> skuIdCartInfoMap =
+                cartInfoList.stream()
+                        .collect(Collectors.toMap(CartInfo::getSkuId, CartInfo -> CartInfo));
+        for (Long skuId : skuIds) {
+            CartInfoVo cartInfoVo = new CartInfoVo();
+            List<CartInfo> cartInfos = new ArrayList<>();
+            cartInfos.add(skuIdCartInfoMap.get(skuId));
+            cartInfoVo.setCartInfoList(cartInfos);
+            cartInfoVo.setActivityRule(null);
+            cartInfoVoList.add(cartInfoVo);
+        }
+        return cartInfoVoList;
+    }
+    public List<CouponInfo> findCartCouponInfo(List<CartInfo> cartInfoList, Long userId) {
+        List<CouponInfo> userAllCouponList = baseMapper.selectCartCouponInfoList(userId);
+        if (CollectionUtils.isEmpty(userAllCouponList)) {
+            return new ArrayList<>();
+        }
+        List<Long> couponIdList = userAllCouponList.stream()
+                .map(CouponInfo::getId)
+                .collect(Collectors.toList());
+        LambdaQueryWrapper<CouponRange> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(CouponRange::getCouponId, couponIdList);
+        List<CouponRange> couponRangeList = couponRangeService.list(queryWrapper);
+        Map<Long, List<Long>> couponIdToSkuIdMap = this.findCouponIdToSkuIdMap(cartInfoList, couponRangeList);
+        BigDecimal reduceAmount = new BigDecimal(0);
+        CouponInfo optimalCouponInfo = null;
+        BigDecimal totalAmount = this.computeTotalAmount(cartInfoList);
+        for (CouponInfo couponInfo : userAllCouponList) {
+            if (CouponRangeType.ALL.equals(couponInfo.getRangeType())) { // 全场通用
+                if (totalAmount.subtract(couponInfo.getConditionAmount()).doubleValue() >= 0) {
+                    couponInfo.setIsSelect(SystemConstants.IS_SELECTED);
+                }
+            } else {
+                List<Long> skuIdList = couponIdToSkuIdMap.get(couponInfo.getId());
+                List<CartInfo> currentCartInfoList = cartInfoList.stream()
+                        .filter(cartInfo -> skuIdList.contains(cartInfo.getSkuId()))
+                        .collect(Collectors.toList());
+                BigDecimal currentCartTotalAmount = this.computeTotalAmount(currentCartInfoList);
+                if (currentCartTotalAmount.subtract(couponInfo.getConditionAmount()).doubleValue() >= 0) {
+                    couponInfo.setIsSelect(SystemConstants.IS_SELECTED);
+                }
+            }
+            if (SystemConstants.IS_SELECTED.equals(couponInfo.getIsSelect())
+                    && couponInfo.getAmount().subtract(reduceAmount).doubleValue() > 0) {
+                reduceAmount = couponInfo.getAmount();
+                optimalCouponInfo = couponInfo;
+            }
+        }
+        if (!Objects.isNull(optimalCouponInfo)) {
+            optimalCouponInfo.setIsOptimal(1);
+        }
+        return userAllCouponList;
+    }

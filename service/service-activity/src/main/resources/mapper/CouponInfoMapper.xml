@@ -109,7 +109,7 @@
             <choose>
                 <when test="userId != null">
                     cuse.user_id = #{userId}
-                    and coupon_status = 1
+                    and cuse.coupon_status = 1
                     and info.expire_time >= now()
                     and info.is_deleted = 0
                     and cuse.is_deleted = 0

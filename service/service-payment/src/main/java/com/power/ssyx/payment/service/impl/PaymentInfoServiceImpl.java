@@ -87,7 +87,7 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
         paymentInfo.setTradeNo(resultMap.get("ransaction_id"));
         paymentInfo.setCallbackContent(resultMap.toString());
         updateById(paymentInfo);
-        // TODO 3.整合RabbiMQ实现 修改订单记录已经支付，库存扣减
+        // 3.整合RabbiMQ实现 修改订单记录已经支付，库存扣减
         rabbitService.sendMessage(MqConst.EXCHANGE_PAY_DIRECT, MqConst.ROUTING_PAY_SUCCESS, orderNo);
     }
 }

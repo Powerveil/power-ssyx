@@ -14,6 +14,7 @@ import com.power.ssyx.activity.service.CouponInfoService;
 import com.power.ssyx.client.product.ProductFeignClient;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
+import com.power.ssyx.contants.SystemConstants;
 import com.power.ssyx.enums.ActivityType;
 import com.power.ssyx.model.activity.ActivityInfo;
 import com.power.ssyx.model.activity.ActivityRule;
@@ -287,12 +288,19 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         return activityRuleList;
     }
 
+    /**
+     * 获取购物车满足条件的促销与优惠券信息
+     *
+     * @param cartInfoList
+     * @param userId
+     * @return
+     */
     @Override
     public OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId) {
 
         // 1.获取购物车，每个购物项参与活动，根据活动规则分组
         //   一个规则对应多个商品
-        // CartInfoVo
+        // CartInfoVo <List<CartInfo>, ActivityRule>
         List<CartInfoVo> cartInfoVoList = this.findCartActivityList(cartInfoList);
 
         // 2.计算参与活动之后金额
@@ -303,6 +311,7 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 //        cartActivityList.forEach(item -> lastMount.add(item.getActivityRule().getReduceAmount()));
 
         // 老师的方法
+        // 多个活动优惠的总金额
         BigDecimal activityReduceAmount = cartInfoVoList.stream()
                 .filter(item -> !Objects.isNull(item.getActivityRule())) // 对没有规则的数据进行过滤
                 .map(item -> item.getActivityRule().getReduceAmount())
@@ -315,15 +324,15 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         BigDecimal couponReduceAmount = new BigDecimal(0);
         if (!CollectionUtils.isEmpty(couponInfoList)) {
             couponReduceAmount = couponInfoList.stream()
-                    .filter(couponInfo -> couponInfo.getIsOptimal().intValue() == 1)
-                    .map(couponInfo -> couponInfo.getAmount())
+                    .filter(couponInfo -> couponInfo.getIsOptimal() == 1) // 是否最优选项
+                    .map(CouponInfo::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
 
         // 5.计算没有参与活动，没有使用优惠卷原始金额
         BigDecimal originalTotalAmount = cartInfoList.stream()
                 // 被选中
-                .filter(cartInfo -> cartInfo.getIsChecked() == 1)
+                .filter(cartInfo -> SystemConstants.IS_SELECTED.equals(cartInfo.getIsChecked()))
                 .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -348,24 +357,27 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         // 创建最终返回集合
         List<CartInfoVo> cartInfoVoList = new ArrayList<>();
         // 获取所有skuId
-        List<Long> skuIds = cartInfoList.stream().map(CartInfo::getSkuId).collect(Collectors.toList());
-        // 根据所有skuId获取参与活动
+        List<Long> skuIds = cartInfoList.stream()
+                .map(CartInfo::getSkuId)
+                .collect(Collectors.toList());
+        // 根据所有skuId获取参与的全部活动
         List<ActivitySku> activitySkuList = baseMapper.selectCartActivity(skuIds);
-        // 根据活动进行分组，每个活动里面有哪些skuId信息
+        // 根据活动进行分组，每个活动里面有哪些skuId信息（带活动的skuId）
         // map里面key是分组字段 活动id
         // value是每组里面sku列表数据，set集合
-        Map<Long, Set<Long>> activityIdToSkuIdListMap =
-                activitySkuList.stream()
-                        .collect(Collectors.groupingBy(ActivitySku::getActivityId,
-                                Collectors.mapping(ActivitySku::getSkuId, Collectors.toSet())));
+        // todo 这里没看明白为什么要用set
+        Map<Long, Set<Long>> activityIdToSkuIdListMap = activitySkuList.stream()
+                .collect(Collectors.groupingBy(ActivitySku::getActivityId,
+                        Collectors.mapping(ActivitySku::getSkuId, Collectors.toSet())));
 
         // 获取活动里面规则数据
         // key是活动id value是活动里面规则列表数据
         Map<Long, List<ActivityRule>> activityIdToActivityRuleListMap =
                 new HashMap<>();
-        // 所有活动id
+        // skuIds中可以参与活动的 所有活动id
         Set<Long> activityIdList = activitySkuList.stream()
-                .map(ActivitySku::getActivityId).collect(Collectors.toSet());
+                .map(ActivitySku::getActivityId)
+                .collect(Collectors.toSet());
 
         // 我的方法：使用for循环，然后查出每个活动id对应的规则列表，然后放入map中
         // 优点：简洁，稍易理解
@@ -380,15 +392,18 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 //            }
 //        }
 
-        // 老师的方法，根绝所有活动id查出所有规则，然后在根绝活动id进行分组
+        // 老师的方法，根据所有活动id查出所有规则，然后在根据活动id进行分组
+        // todo 这里判断的是满减件数，没有判断满减金额的情况
         if (!CollectionUtils.isEmpty(activityIdList)) {
             LambdaQueryWrapper<ActivityRule> queryWrapper = new LambdaQueryWrapper<>();
+            // 根据满减金额降序排列
             queryWrapper.orderByDesc(ActivityRule::getConditionAmount, ActivityRule::getConditionNum);
             queryWrapper.in(ActivityRule::getActivityId, activityIdList);
             List<ActivityRule> activityRuleList = activityRuleMapper.selectList(queryWrapper);
             // 封装到activityIdToActivityRuleListMap里面
             // 根据活动id进行分组 这里比较巧妙
-            activityIdToActivityRuleListMap = activityRuleList.stream().collect(Collectors.groupingBy(ActivityRule::getActivityId));
+            activityIdToActivityRuleListMap = activityRuleList.stream()
+                    .collect(Collectors.groupingBy(ActivityRule::getActivityId));
         }
 
         // 有活动的购物项skuId
@@ -400,14 +415,14 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 // 记录有活动的skuId
                 activitySkuIdSet.addAll(currentActivitySkuIdSet);
                 // 获取当前活动对应的购物项列表 （原来的购物车List有的参加了活动，有的没有参加）
-                List<CartInfo> currentActivityCartInfoList = cartInfoList.stream().filter(item -> {
-                    return currentActivitySkuIdSet.contains(item.getSkuId());
-                }).collect(Collectors.toList());
+                List<CartInfo> currentActivityCartInfoList =
+                        cartInfoList.stream()
+                                .filter(item -> currentActivitySkuIdSet.contains(item.getSkuId()))
+                                .collect(Collectors.toList());
                 // 计数购物项总金额和总数量
                 BigDecimal activityTotalAmount = this.computeTotalAmount(currentActivityCartInfoList);
-
+                // 计算购物项总数量
                 int activityTotalNum = this.computeCartNum(currentActivityCartInfoList);
-
                 // 计算活动对应规则
                 // 根据activityId获取活动对应规则
                 List<ActivityRule> currentActivityRuleList =
@@ -416,26 +431,22 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                 if (!CollectionUtils.isEmpty(currentActivityRuleList) && currentActivityRuleList.size() >= 2) {
 //                    currentActivityRuleList.sort((o1, o2) -> o2.getReduceAmount().compareTo(o1.getReduceAmount()));
 
-                    Collections.sort(currentActivityRuleList, new Comparator<ActivityRule>() {
-                        @Override
-                        public int compare(ActivityRule o1, ActivityRule o2) {
-                            // 根绝优惠金额从大到小进行排序
-                            return o2.getBenefitAmount().compareTo(o1.getBenefitAmount());
-                        }
+                    currentActivityRuleList.sort((o1, o2) -> {
+                        // 根据优惠金额从大到小进行排序
+                        return o2.getBenefitAmount().compareTo(o1.getBenefitAmount());
                     });
                 }
-
                 ActivityType activityType = currentActivityRuleList.get(0).getActivityType();
                 // 判断活动类型：满减和打折
                 ActivityRule activityRule = null;
                 // 规则没有最好只有最想让用户看到什么
-                if (ActivityType.FULL_REDUCTION.equals(activityType)) { //满减
+                if (ActivityType.FULL_REDUCTION.equals(activityType)) { // 满减
                     activityRule = this.computeFullReduction(activityTotalAmount, currentActivityRuleList);
-                } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) { //满量
+                } else if (ActivityType.FULL_DISCOUNT.equals(activityType)) { // 满量
                     activityRule = this.computeFullDiscount(activityTotalNum, activityTotalAmount, currentActivityRuleList);
                 }
 
-                //CartInfoVo封装
+                // CartInfoVo封装
                 CartInfoVo cartInfoVo = new CartInfoVo();
                 cartInfoVo.setCartInfoList(currentActivityCartInfoList);
                 cartInfoVo.setActivityRule(activityRule);
@@ -464,22 +475,22 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
 //        }
 
         // 老师的方法
+        // 个人认为我的方法更好一些，相对于老师的方法节省了一些空间（有活动的节省）
         skuIds.removeAll(activitySkuIdSet);
-        if (!Objects.isNull(skuIds)) {
-            Map<Long, CartInfo> skuIdCartInfoMap =
-                    cartInfoList.stream()
-                            .collect(Collectors.toMap(CartInfo::getSkuId, CartInfo -> CartInfo));
-            for (Long skuId : skuIds) {
-                CartInfoVo cartInfoVo = new CartInfoVo();
 
-                List<CartInfo> cartInfos = new ArrayList<>();
-                cartInfos.add(skuIdCartInfoMap.get(skuId));
+        Map<Long, CartInfo> skuIdCartInfoMap =
+                cartInfoList.stream()
+                        .collect(Collectors.toMap(CartInfo::getSkuId, CartInfo -> CartInfo));
+        for (Long skuId : skuIds) {
+            CartInfoVo cartInfoVo = new CartInfoVo();
 
-                cartInfoVo.setCartInfoList(cartInfos);
-                cartInfoVo.setActivityRule(null);
+            List<CartInfo> cartInfos = new ArrayList<>();
+            cartInfos.add(skuIdCartInfoMap.get(skuId));
 
-                cartInfoVoList.add(cartInfoVo);
-            }
+            cartInfoVo.setCartInfoList(cartInfos);
+            cartInfoVo.setActivityRule(null);
+
+            cartInfoVoList.add(cartInfoVo);
         }
 
         return cartInfoVoList;
@@ -540,15 +551,15 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
      * 计算满减最优规则
      *
      * @param totalAmount
-     * @param activityRuleList //该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
+     * @param activityRuleList // 该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
      */
     private ActivityRule computeFullReduction(BigDecimal totalAmount, List<ActivityRule> activityRuleList) {
         ActivityRule optimalActivityRule = null;
-        //该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
+        // 该活动规则skuActivityRuleList数据，已经按照优惠金额从大到小排序了
         for (ActivityRule activityRule : activityRuleList) {
-            //如果订单项金额大于等于满减金额，则优惠金额
+            // 如果订单项金额大于等于满减金额，则优惠金额
             if (totalAmount.compareTo(activityRule.getConditionAmount()) > -1) {
-                //优惠后减少金额
+                // 优惠后减少金额
                 activityRule.setReduceAmount(activityRule.getBenefitAmount());
                 optimalActivityRule = activityRule;
                 // 默认只能使用一次

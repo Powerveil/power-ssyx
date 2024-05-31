@@ -326,7 +326,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         LambdaQueryWrapper<SkuInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuInfo::getIsNewPerson, SystemConstants.IS_NEW_PERSON);
         queryWrapper.eq(SkuInfo::getPublishStatus, SystemConstants.PUBLISH_PASS);
-        queryWrapper.orderByDesc(SkuInfo::getStock); //库存排序
+        queryWrapper.orderByDesc(SkuInfo::getStock); // 库存排序
         queryWrapper.last("limit 2");
         return this.list(queryWrapper);
     }
@@ -397,6 +397,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         redisTemplate.delete(key);
     }
 
+    /**
+     * 检查库存并锁定
+     *
+     * @param skuStockLockVo
+     */
     private void checkLock(SkuStockLockVo skuStockLockVo) {
 
         // 获取锁

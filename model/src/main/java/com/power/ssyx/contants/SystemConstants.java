@@ -52,5 +52,9 @@ public class SystemConstants {
 
     public static final String PAYMENT_SUCCESS = "SUCCESS";
 
+    /**
+     * 是否选中 0为未选中 1为选中（购物车购物项, 优惠卷）
+     */
+    public static final Integer IS_SELECTED = 1;
 
 }
