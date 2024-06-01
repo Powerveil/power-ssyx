@@ -3,7 +3,6 @@ package com.power.ssyx.order.listener;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.power.ssyx.client.product.ProductFeignClient;
 import com.power.ssyx.common.constant.RedisConst;
-import com.power.ssyx.model.order.OrderInfo;
 import com.power.ssyx.model.order.OrderItem;
 import com.power.ssyx.order.mapper.OrderInfoMapper;
 import com.power.ssyx.order.mapper.OrderItemMapper;
@@ -52,10 +51,10 @@ public class OrderExpireListener extends KeyExpirationEventMessageListener {
             // 1.1取出订单号
             int index = expireKey.lastIndexOf(":") + 1;
             String orderNo = expireKey.substring(index);
-            LambdaQueryWrapper<OrderInfo> orderInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            orderInfoLambdaQueryWrapper.eq(OrderInfo::getOrderNo, orderNo);
-            // 1.2删除订单基本表中的数据
-            orderInfoMapper.delete(orderInfoLambdaQueryWrapper);
+//            LambdaQueryWrapper<OrderInfo> orderInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
+//            orderInfoLambdaQueryWrapper.eq(OrderInfo::getOrderNo, orderNo);
+//            // 1.2删除订单基本表中的数据
+//            orderInfoMapper.delete(orderInfoLambdaQueryWrapper);
             // 2.删除订单项表中的数据
             Long orderId = orderInfoMapper.queryOrderIdByOrderNo(orderNo);
             LambdaQueryWrapper<OrderItem> orderItemLambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -66,7 +65,7 @@ public class OrderExpireListener extends KeyExpirationEventMessageListener {
             Map<Long, Integer> map = orderItems.stream()
                     .collect(Collectors.toMap(OrderItem::getSkuId, OrderItem::getSkuNum));
             // 2.2删除订单项的数据
-            orderItemMapper.delete(orderItemLambdaQueryWrapper);
+//            orderItemMapper.delete(orderItemLambdaQueryWrapper);
             // 3.解锁取消库存
             productFeignClient.unlockStockAndCancel(map, orderNo);
         }
