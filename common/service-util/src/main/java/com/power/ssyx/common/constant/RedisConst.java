@@ -11,9 +11,9 @@ public class RedisConst {
     public static final String SKUKEY_PREFIX = "sku:";
     public static final String SKUKEY_SUFFIX = ":info";
     //单位：秒
-    public static final long SKUKEY_TIMEOUT = 24 * 60 * 60;
+    public static final long SKUKEY_TIMEOUT = 24 * 60 * 60L;
     // 定义变量，记录空对象的缓存过期时间 缓存穿透key的过期时间
-    public static final long SKUKEY_TEMPORARY_TIMEOUT = 10 * 60;
+    public static final long SKUKEY_TEMPORARY_TIMEOUT = 10 * 60L;
     public static final long IMAGE_UPLOAD_BLACKLIST_TIMEOUT = 2 * 60L;
 
     //单位：秒 尝试获取锁的最大等待时间
@@ -24,7 +24,7 @@ public class RedisConst {
 
     public static final String USER_KEY_PREFIX = "user:";
     public static final String USER_CART_KEY_SUFFIX = ":cart";
-    public static final long USER_CART_EXPIRE = 60 * 60 * 24; // 24小时
+    public static final long USER_CART_EXPIRE = 60 * 60 * 24L; // 24小时
     public static final String STOCK_INFO = "stock:info:";
     public static final String ORDER_REPEAT = "order:repeat:";
 
@@ -34,6 +34,9 @@ public class RedisConst {
     //    public static final String userinfoKey_suffix = ":info";
     public static final int USERKEY_TIMEOUT = 365;
     public static final String ORDER_SKU_MAP = "order:sku:";
+    public static final String ORDER_TEMP_SKU_MAP = "order:temp:sku:";
+    // 订单支付超时时间
+    public static final long ORDER_TEMP_SKU_EXPIRE = 60 * 60 * 24L; // 24小时
 
     //秒杀商品前缀
     public static final String SECKILL_TIME_MAP = "seckill:time:map";

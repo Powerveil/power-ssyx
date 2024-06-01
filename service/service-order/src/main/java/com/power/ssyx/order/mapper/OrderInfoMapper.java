@@ -3,6 +3,7 @@ package com.power.ssyx.order.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.power.ssyx.model.order.OrderInfo;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @author power
@@ -13,6 +14,9 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
+    Long queryUserIdByOrderNo(@Param("orderNo") String orderNo);
+
+    Long queryOrderIdByOrderNo(@Param("orderNo") String orderNo);
 }
 
 

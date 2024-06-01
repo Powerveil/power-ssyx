@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Powerveil
@@ -91,6 +92,14 @@ public class ProductInnnerController {
     public Boolean checkAndLock(@RequestBody List<SkuStockLockVo> skuStockLockVoList,
                                 @PathVariable String orderNo) {
         return skuInfoService.checkAndLock(skuStockLockVoList, orderNo);
+    }
+
+    // 解锁并取消库存
+    @ApiOperation(value = "锁定库存")
+    @PostMapping("/inner/unlockStockAndCancel/{orderNo}")
+    public Boolean unlockStockAndCancel(@RequestBody Map<Long, Integer> map,
+                                        @PathVariable String orderNo) {
+        return skuInfoService.unlockStockAndCancel(map, orderNo);
     }
 
 }

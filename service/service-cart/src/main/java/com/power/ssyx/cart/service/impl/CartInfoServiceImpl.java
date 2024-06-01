@@ -156,7 +156,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     @Override
     public Result deleteCart(Long skuId) {
         BoundHashOperations<String, String, CartInfo> boundHashOperations = getCartBoundHashOperations();
-        if (boundHashOperations.hasKey(skuId.toString())) {
+        if (Boolean.TRUE.equals(boundHashOperations.hasKey(skuId.toString()))) {
             boundHashOperations.delete(skuId.toString());
         }
         return Result.ok(null);

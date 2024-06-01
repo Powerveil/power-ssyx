@@ -36,6 +36,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -380,6 +381,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         return true;
     }
 
+    // 解锁取消库存
+
     // 扣减库存成功，更新订单状态
     @Override
     public void minusStokc(String orderNo) {
@@ -393,8 +396,19 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         // 所有锁定成功的商品都解锁
         skuStockLockVoList.stream()
                 .forEach(skuStockLockVo -> baseMapper.minusStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum()));
-        // 删除redis数据
+        // 删除redis订单库存数据
         redisTemplate.delete(key);
+    }
+
+    // 解锁并取消库存
+    @Override
+    public Boolean unlockStockAndCancel(Map<Long, Integer> map, String orderNo) {
+        // 1.解锁并取消库存
+        String key = RedisConst.STOCK_INFO + orderNo;
+        map.forEach((skuId, skuNum) -> baseMapper.unlockStock(skuId, skuNum));
+        // 删除redis订单库存数据
+        redisTemplate.delete(key);
+        return Boolean.TRUE;
     }
 
     /**

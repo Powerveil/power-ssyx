@@ -13,7 +13,6 @@ import com.power.ssyx.common.constant.RedisConst;
 import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
-import com.power.ssyx.common.utils.DateUtil;
 import com.power.ssyx.enums.*;
 import com.power.ssyx.model.activity.ActivityRule;
 import com.power.ssyx.model.activity.CouponInfo;
@@ -77,6 +76,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     @Autowired
     private OrderItemMapper orderItemMapper;
+    @Autowired
+    private OrderInfoMapper orderInfoMapper;
 
     // 需要添加一层结构，现在问题逐渐显露
     @Autowired
@@ -92,25 +93,19 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     public Result confirmOrder() {
         // 获取到用户Id
         Long userId = AuthContextHolder.getUserId();
-
         // 获取用户对应团长信息
         LeaderAddressVo leaderAddressVo = userFeignClient.getUserAddressByUserId(userId);
-
         // 获取购物车里面选中的商品
         List<CartInfo> cartInfoList = cartFeignClient.getCartCheckedList(userId);
-
         // 唯一标识订单
         String orderNo = System.currentTimeMillis() + "";
         redisTemplate.opsForValue()
                 .set(RedisConst.ORDER_REPEAT + orderNo, orderNo, 24, TimeUnit.HOURS);
-
-
         // 获取购物车满足条件活动和优惠卷信息
         OrderConfirmVo orderConfirmVo = activityFeignClient.findCartActivityAndCoupon(cartInfoList, userId);
         // 封装其他值
         orderConfirmVo.setLeaderAddressVo(leaderAddressVo);
         orderConfirmVo.setOrderNo(orderNo);
-
         return Result.ok(orderConfirmVo);
     }
 
@@ -124,7 +119,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     public Result submitOrder(OrderSubmitVo orderParamVo) {
         // 获取到用户Id
         Long userId = AuthContextHolder.getUserId();
-
         // 第二步 订单不能重复提交，重复提交验证
         // 通过redis + Lua脚本进行判断
         //// Lua脚本保证原子性操作（通过Lua脚本在Redis中执行两个操作（查询和删除）的组合，确保了这两个操作的原子性。）
@@ -143,7 +137,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         if (!flag) {
             throw new SsyxException(ResultCodeEnum.REPEAT_SUBMIT);
         }
-
         // 第三步 验证库存 并且 锁定库存
         // 比如仓库有10个西红柿，我想买2个西红柿
         // ** 验证库存，查询仓库里面是否有充足的西红柿
@@ -155,7 +148,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         List<CartInfo> commonSkuList = cartInfoList.stream()
                 .filter(cartInfo -> cartInfo.getSkuType().equals(SkuType.COMMON.getCode()))
                 .collect(Collectors.toList());
-
         // 3.把获取购物车里面普通类型商品List集合，转换List<SkuStockLockVo>
         if (!CollectionUtils.isEmpty(commonSkuList)) {
             List<SkuStockLockVo> commonStockLockVoList = commonSkuList.stream().map(item -> {
@@ -171,24 +163,19 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 throw new SsyxException(ResultCodeEnum.ORDER_STOCK_FALL);
             }
         }
-
-
         // 第四步 下单过程
         // order_info order_item order_log
         Long orderId = this.saveOrder(orderParamVo, cartInfoList);
-
-
         // 下单完成，删除购物车记录
         rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
                 MqConst.ROUTING_DELETE_CART,
                 userId);
-
         // 第五步 返回订单id
         return Result.ok(orderId);
     }
 
 
-    //计算总金额
+    // 计算总金额
     private BigDecimal computeTotalAmount(List<CartInfo> cartInfoList) {
         BigDecimal total = new BigDecimal(0);
         for (CartInfo cartInfo : cartInfoList) {
@@ -208,10 +195,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
      */
     private Map<String, BigDecimal> computeActivitySplitAmount(List<CartInfo> cartInfoParamList) {
         Map<String, BigDecimal> activitySplitAmountMap = new HashMap<>();
-
         // 促销活动相关信息
         List<CartInfoVo> cartInfoVoList = activityFeignClient.findCartActivityList(cartInfoParamList);
-
         // 活动总金额
         BigDecimal activityReduceAmount = new BigDecimal(0);
         if (!CollectionUtils.isEmpty(cartInfoVoList)) {
@@ -258,14 +243,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                                 }
                                 // 存入map <activity:skuId, skuReduceAmount>
                                 activitySplitAmountMap.put(activityPrefix + cartInfo.getSkuId(), skuReduceAmount);
-
                                 skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
                             } else {
                                 BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
                                 activitySplitAmountMap.put(activityPrefix + cartInfo.getSkuId(), skuReduceAmount);
                             }
                         }
-
                     }
                 }
             }
@@ -316,7 +299,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                             //sku分摊金额
                             BigDecimal skuReduceAmount = skuTotalAmount.divide(originalTotalAmount, 2, RoundingMode.HALF_UP).multiply(reduceAmount);
                             couponInfoSplitAmountMap.put(prefix + cartInfo.getSkuId(), skuReduceAmount);
-
                             skuPartReduceAmount = skuPartReduceAmount.add(skuReduceAmount);
                         } else {
                             BigDecimal skuReduceAmount = reduceAmount.subtract(skuPartReduceAmount);
@@ -349,14 +331,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         if (Objects.isNull(leaderAddressVo)) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
         }
-
         // 计算金额
         Map<String, BigDecimal> activitySplitAmount = this.computeActivitySplitAmount(cartInfoList);
         // 优惠卷金额
         // orderParamVo是带有的couponId
         Map<String, BigDecimal> couponInfoSplitAmount =
                 this.computeCouponInfoSplitAmount(cartInfoList, orderParamVo.getCouponId());
-
         // 封装订单项数据
         List<OrderItem> orderItemList = new ArrayList<>();
         for (CartInfo cartInfo : cartInfoList) {
@@ -390,7 +370,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderItem.setSplitCouponAmount(couponAmount);
             // 总金额
             BigDecimal skuTotalAmount = orderItem.getSkuPrice().multiply(new BigDecimal(orderItem.getSkuNum()));
-
             // 优惠之后的金额
             BigDecimal splitTotalAmount = skuTotalAmount.subtract(activityAmount).subtract(couponAmount);
 
@@ -398,7 +377,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
             orderItemList.add(orderItem);
         }
-
         // 封装订单OrderInfo数据
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setUserId(userId); // 用户id
@@ -438,7 +416,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         BigDecimal profitRate = new BigDecimal(0); // orderSetService.getProfitRate();
         BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
         orderInfo.setCommissionAmount(commissionAmount);
-
         // 添加数据到订单基本信息表
         // order_info order_item TODO order_log暂时没有添加
 //        baseMapper.insert(orderInfo);
@@ -454,45 +431,39 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderItemService.saveBatch(orderItemList);
             return Boolean.TRUE;
         });
-
         // 如果当前订单使用优惠卷，更新优惠卷状态
         // todo 这里的事务怎么处理？
         if (!Objects.isNull(orderInfo.getCouponId())) {
             // 这个订单id是自增的(orderId)，不是那个orderNo
             activityFeignClient.updateCouponInfoUserStatus(orderInfo.getCouponId(), userId, orderInfo.getId());
         }
-
         // 下单成功，记录用户购物商品数量，redis
         // todo 这里需要考虑订单超时后，这些存入数据是有问题的，需要取出来，考虑用另一个key临时存放
-        String orderSkuKey = RedisConst.ORDER_SKU_MAP + orderParamVo.getUserId();
-        BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
+        // 将临时订单数据存入redis
+        // order:temp:sku:orderId 注意这里是orderId 减小key的大小
+//        String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderInfo.getId();
+        String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderParamVo.getOrderNo();
+        BoundHashOperations<String, String, Integer> boundHashOperations = redisTemplate.boundHashOps(orderTempSkuKey);
         cartInfoList.forEach(cartInfo -> {
             Integer orderSkuNum = cartInfo.getSkuNum();
-            if (hashOperations.hasKey(cartInfo.getSkuId().toString())) {
-                orderSkuNum += hashOperations.get(cartInfo.getSkuId().toString());
-            }
-            hashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
+            boundHashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
         });
         // 设置订单超时时间
-        redisTemplate.expire(orderSkuKey, DateUtil.getCurrentExpireTimes(), TimeUnit.SECONDS);
+        redisTemplate.expire(orderTempSkuKey, RedisConst.ORDER_TEMP_SKU_EXPIRE, TimeUnit.SECONDS);
         // 返回订单id
         return orderInfo.getId();
     }
 
     @Override
     public Result getOrderInfoById(Long orderId) {
-
         // 根据orderId查询订单基本信息
         OrderInfo orderInfo = baseMapper.selectById(orderId);
-
         // 根据orderId查询订单所有订单项list列表
         LambdaQueryWrapper<OrderItem> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(OrderItem::getOrderId, orderId);
         List<OrderItem> orderItemList = orderItemMapper.selectList(queryWrapper);
-
         // 查询所有订单项封装到每个对象里面
         orderInfo.setOrderItemList(orderItemList);
-
         return Result.ok(orderInfo);
     }
 
@@ -514,7 +485,31 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
         // 更新状态
         this.updateOrderStatus(orderInfo.getId());
+        // 删除redis临时订单数据 todo 这里应该是数据库先成功删除才可以操作redis
 
+        Map<String, Integer> map = new HashMap<>();
+        String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderNo;
+        BoundHashOperations<String, String, Integer> boundHashOperations = redisTemplate.boundHashOps(orderTempSkuKey);
+        Set<String> keys = boundHashOperations.keys();
+        for (String skuId : keys) {
+            if (Boolean.TRUE.equals(boundHashOperations.hasKey(skuId))) {
+                Integer skuNum = boundHashOperations.get(skuId);
+                map.put(skuId, skuNum);
+                boundHashOperations.delete(skuId);
+            }
+        }
+        // 根绝订单编号查询userId
+        Long userId = orderInfoMapper.queryUserIdByOrderNo(orderNo);
+//        Long userId = AuthContextHolder.getUserId();
+        String orderSkuKey = RedisConst.ORDER_SKU_MAP + userId;
+        BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
+        map.forEach((skuId, skuNum) -> {
+            Integer orderSkuNum = skuNum;
+            if (Boolean.TRUE.equals(hashOperations.hasKey(skuId))) {
+                orderSkuNum += hashOperations.get(skuId);
+            }
+            hashOperations.put(skuId, orderSkuNum);
+        });
         // 扣减库存
         rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
                 MqConst.ROUTING_MINUS_STOCK,

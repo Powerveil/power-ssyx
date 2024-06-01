@@ -62,4 +62,14 @@
         cancel_reason,ware_id,commission_amount,
         create_time,update_time,is_deleted
     </sql>
+    <select id="queryUserIdByOrderNo" resultType="java.lang.Long">
+        select user_id
+        from order_info
+        where order_no = #{orderNo};
+    </select>
+    <select id="queryOrderIdByOrderNo" resultType="java.lang.Long">
+        select id
+        from order_info
+        where order_no = #{orderNo};
+    </select>
 </mapper>

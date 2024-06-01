@@ -8,6 +8,7 @@ import com.power.ssyx.vo.product.SkuInfoVo;
 import com.power.ssyx.vo.product.SkuStockLockVo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author power
@@ -54,4 +55,7 @@ public interface SkuInfoService extends IService<SkuInfo> {
 
     // 扣减库存成功，更新订单状态
     void minusStokc(String orderNo);
+
+    // 解锁并取消库存
+    Boolean unlockStockAndCancel(Map<Long, Integer> map, String orderNo);
 }
