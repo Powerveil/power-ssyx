@@ -355,7 +355,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderItem.setImgUrl(cartInfo.getImgUrl());
             orderItem.setSkuNum(cartInfo.getSkuNum());
             orderItem.setLeaderId(orderParamVo.getLeaderId());
-
             // 营销活动金额
             BigDecimal activityAmount = activitySplitAmount.get("activity:" + orderItem.getSkuId());
             if (Objects.isNull(activityAmount)) {
@@ -398,7 +397,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         orderInfo.setCouponId(orderParamVo.getCouponId());
 
-
         // 计算订单金额
         BigDecimal originalTotalAmount = this.computeTotalAmount(cartInfoList);
         BigDecimal activityAmount = activitySplitAmount.get("activity:total");
@@ -411,7 +409,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         orderInfo.setActivityAmount(activityAmount);
         orderInfo.setCouponAmount(couponAmount);
         orderInfo.setTotalAmount(totalAmount);
-
         // 计算团长佣金
         BigDecimal profitRate = new BigDecimal(0); // orderSetService.getProfitRate();
         BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
@@ -424,7 +421,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderItem.setOrderId(orderInfo.getId());
         }
         orderInfoServiceProxy = (OrderInfoService) AopContext.currentProxy();
-
         // 缩小事务的粒度
         transactionTemplate.execute(status -> {
             orderInfoServiceProxy.save(orderInfo);
@@ -439,17 +435,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
         // 下单成功，记录用户购物商品数量，redis
         // todo 这里需要考虑订单超时后，这些存入数据是有问题的，需要取出来，考虑用另一个key临时存放
-        // 将临时订单数据存入redis
+        // 存入redis临时订单key
         // order:temp:sku:orderId 注意这里是orderId 减小key的大小
 //        String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderInfo.getId();
         String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderParamVo.getOrderNo();
-        BoundHashOperations<String, String, Integer> boundHashOperations = redisTemplate.boundHashOps(orderTempSkuKey);
-        cartInfoList.forEach(cartInfo -> {
-            Integer orderSkuNum = cartInfo.getSkuNum();
-            boundHashOperations.put(cartInfo.getSkuId().toString(), orderSkuNum);
-        });
-        // 设置订单超时时间
-        redisTemplate.expire(orderTempSkuKey, RedisConst.ORDER_TEMP_SKU_EXPIRE, TimeUnit.SECONDS);
+        redisTemplate.opsForValue()
+                .set(orderTempSkuKey, orderParamVo.getUserId(), RedisConst.ORDER_TEMP_SKU_EXPIRE, TimeUnit.SECONDS);
         // 返回订单id
         return orderInfo.getId();
     }
@@ -486,20 +477,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // 更新状态
         this.updateOrderStatus(orderInfo.getId());
         // 删除redis临时订单数据 todo 这里应该是数据库先成功删除才可以操作redis
-
-        Map<String, Integer> map = new HashMap<>();
         String orderTempSkuKey = RedisConst.ORDER_TEMP_SKU_MAP + orderNo;
-        BoundHashOperations<String, String, Integer> boundHashOperations = redisTemplate.boundHashOps(orderTempSkuKey);
-        Set<String> keys = boundHashOperations.keys();
-        for (String skuId : keys) {
-            if (Boolean.TRUE.equals(boundHashOperations.hasKey(skuId))) {
-                Integer skuNum = boundHashOperations.get(skuId);
-                map.put(skuId, skuNum);
-                boundHashOperations.delete(skuId);
-            }
-        }
+        Map<Long, Integer> map = this.getSkuIdToSkuNumMap(orderNo);
         // 根绝订单编号查询userId
-        Long userId = orderInfoMapper.queryUserIdByOrderNo(orderNo);
+        Long userId = null;
+        // 查询userId，一般情况下从订单中获取，如果key恰好过期，就从数据库获取
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(orderTempSkuKey))) {
+            userId = (Long) redisTemplate.opsForValue().get(orderTempSkuKey);
+        } else {
+            userId = orderInfoMapper.queryUserIdByOrderNo(orderNo);
+        }
 //        Long userId = AuthContextHolder.getUserId();
         String orderSkuKey = RedisConst.ORDER_SKU_MAP + userId;
         BoundHashOperations<String, String, Integer> hashOperations = redisTemplate.boundHashOps(orderSkuKey);
@@ -508,12 +495,24 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             if (Boolean.TRUE.equals(hashOperations.hasKey(skuId))) {
                 orderSkuNum += hashOperations.get(skuId);
             }
-            hashOperations.put(skuId, orderSkuNum);
+            hashOperations.put(skuId.toString(), orderSkuNum);
         });
         // 扣减库存
         rabbitService.sendMessage(MqConst.EXCHANGE_ORDER_DIRECT,
                 MqConst.ROUTING_MINUS_STOCK,
                 orderNo);
+    }
+
+    public Map<Long, Integer> getSkuIdToSkuNumMap(String orderNo) {
+        Long orderId = orderInfoMapper.queryOrderIdByOrderNo(orderNo);
+        LambdaQueryWrapper<OrderItem> orderItemLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        orderItemLambdaQueryWrapper.eq(OrderItem::getOrderId, orderId);
+        // 2.1取出订单项数据，为解锁取消库存做准备
+        List<OrderItem> orderItems = orderItemMapper.selectList(orderItemLambdaQueryWrapper);
+        // 将orderItems转为map，key为skuId，value为skuNum
+        Map<Long, Integer> map = orderItems.stream()
+                .collect(Collectors.toMap(OrderItem::getSkuId, OrderItem::getSkuNum));
+        return map;
     }
 
     @Override

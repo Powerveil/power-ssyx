@@ -6,6 +6,8 @@ import com.power.ssyx.model.order.OrderInfo;
 import com.power.ssyx.vo.order.OrderSubmitVo;
 import com.power.ssyx.vo.order.OrderUserQueryVo;
 
+import java.util.Map;
+
 /**
  * @author power
  * @description 针对表【order_info(订单)】的数据库操作Service
@@ -30,4 +32,7 @@ public interface OrderInfoService extends IService<OrderInfo> {
 
     // 获取用户订单分页列表
     Result findUserOrderPage(Long page, Long limit, OrderUserQueryVo orderUserQueryVo);
+
+    // 通过订单获取SkuIdToSkuNumMap
+    public Map<Long, Integer> getSkuIdToSkuNumMap(String orderNo);
 }

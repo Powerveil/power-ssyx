@@ -72,4 +72,9 @@
         from order_info
         where order_no = #{orderNo};
     </select>
+    <update id="updateStatusByOrderNo">
+        update order_info
+        set order_status = #{orderStatus}
+        where order_no = #{orderNo};
+    </update>
 </mapper>

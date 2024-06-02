@@ -17,6 +17,9 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
     Long queryUserIdByOrderNo(@Param("orderNo") String orderNo);
 
     Long queryOrderIdByOrderNo(@Param("orderNo") String orderNo);
+
+    boolean updateStatusByOrderNo(@Param("orderNo") String orderNo,
+                                  @Param("orderStatus") Integer orderStatus);
 }
 
 
