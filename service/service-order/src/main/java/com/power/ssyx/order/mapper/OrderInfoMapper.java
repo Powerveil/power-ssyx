@@ -20,6 +20,9 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     boolean updateStatusByOrderNo(@Param("orderNo") String orderNo,
                                   @Param("orderStatus") Integer orderStatus);
+
+    // 根据订单号查询
+    Integer queryStatusByOrderNo(@Param("orderNo") String orderNo);
 }
 
 

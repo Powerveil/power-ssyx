@@ -52,14 +52,24 @@ public class OrderExpireListener extends KeyExpirationEventMessageListener {
                 int index = expireKey.lastIndexOf(":") + 1;
                 orderNo = expireKey.substring(index);
                 log.info("正在处理超时订单,订单号为:{}", orderNo);
-//            // 1.2更新订单状态
-//            orderInfoMapper.delete(orderInfoLambdaQueryWrapper);
-                orderInfoMapper.updateStatusByOrderNo(orderNo, OrderStatus.CANCEL.getCode());
-                // 3.解锁取消库存
-                // 3.1查询订单项的skuId和skuNum
-                Map<Long, Integer> map = orderInfoService.getSkuIdToSkuNumMap(orderNo);
-                productFeignClient.unlockStockAndCancel(map, orderNo);
-                log.info("超时订单处理完成,订单号为:{}", orderNo);
+                // 1.2更新订单状态
+                OrderStatus orderStatus = OrderStatus.of(orderInfoMapper.queryStatusByOrderNo(orderNo));
+                switch (orderStatus) {
+                    case UNPAID:
+                        orderInfoMapper.updateStatusByOrderNo(orderNo, OrderStatus.CANCEL.getCode());
+                        // 3.解锁取消库存
+                        // 3.1查询订单项的skuId和skuNum
+                        Map<Long, Integer> map = orderInfoService.getSkuIdToSkuNumMap(orderNo);
+                        productFeignClient.unlockStockAndCancel(map, orderNo);
+                        log.info("超时订单处理完成,订单号为:{}", orderNo);
+                        break;
+                    case FINISHED:
+                        log.info("超时订单已支付,无需操作,订单号为:{}", orderNo);
+                        break;
+                    case CANCEL:
+                        log.info("超时订单已处理,无需操作,订单号为:{}", orderNo);
+                        break;
+                }
             } catch (Exception e) {
                 log.error("超时订单处理失败,订单号为:{}", orderNo);
                 e.printStackTrace();
