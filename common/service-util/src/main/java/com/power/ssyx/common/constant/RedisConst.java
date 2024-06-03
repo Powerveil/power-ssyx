@@ -32,7 +32,7 @@ public class RedisConst {
     public static final String USER_LOGIN_KEY_PREFIX = "user:login:";
     public static final String ADMIN_LOGIN_KEY_PREFIX = "admin:login:";
     //    public static final String userinfoKey_suffix = ":info";
-    public static final int USERKEY_TIMEOUT = 365;
+    public static final int USERKEY_TIMEOUT = 2;
     public static final String ORDER_SKU_MAP = "order:sku:";
     public static final String ORDER_TEMP_SKU_MAP = "order:temp:sku:";
     // 订单支付超时时间

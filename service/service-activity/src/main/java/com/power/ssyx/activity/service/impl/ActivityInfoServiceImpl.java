@@ -297,29 +297,23 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
      */
     @Override
     public OrderConfirmVo findCartActivityAndCoupon(List<CartInfo> cartInfoList, Long userId) {
-
         // 1.获取购物车，每个购物项参与活动，根据活动规则分组
         //   一个规则对应多个商品
         // CartInfoVo <List<CartInfo>, ActivityRule>
         List<CartInfoVo> cartInfoVoList = this.findCartActivityList(cartInfoList);
-
         // 2.计算参与活动之后金额
-
         // 我的方法
 //        BigDecimal lastMount = new BigDecimal(0);
 //
 //        cartActivityList.forEach(item -> lastMount.add(item.getActivityRule().getReduceAmount()));
-
         // 老师的方法
         // 多个活动优惠的总金额
         BigDecimal activityReduceAmount = cartInfoVoList.stream()
                 .filter(item -> !Objects.isNull(item.getActivityRule())) // 对没有规则的数据进行过滤
                 .map(item -> item.getActivityRule().getReduceAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
         // 3.获取购物车可以使用优惠卷列表
         List<CouponInfo> couponInfoList = couponInfoService.findCartCouponInfo(cartInfoList, userId);
-
         // 4.计算商品使用优惠卷之后金额，一次只能使用一张优惠卷
         BigDecimal couponReduceAmount = new BigDecimal(0);
         if (!CollectionUtils.isEmpty(couponInfoList)) {
@@ -328,14 +322,12 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
                     .map(CouponInfo::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
-
         // 5.计算没有参与活动，没有使用优惠卷原始金额
         BigDecimal originalTotalAmount = cartInfoList.stream()
                 // 被选中
                 .filter(cartInfo -> SystemConstants.IS_SELECTED.equals(cartInfo.getIsChecked()))
                 .map(cartInfo -> cartInfo.getCartPrice().multiply(new BigDecimal(cartInfo.getSkuNum())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
         // 6.最终金额
         BigDecimal toTalAmount = originalTotalAmount.subtract(activityReduceAmount).subtract(couponReduceAmount);
         // 7.封装需要数据到OrderConfirmVo
@@ -346,8 +338,6 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         orderTradeVo.setCouponReduceAmount(couponReduceAmount);
         orderTradeVo.setOriginalTotalAmount(originalTotalAmount);
         orderTradeVo.setTotalAmount(toTalAmount);
-
-
         return orderTradeVo;
     }
 
@@ -360,16 +350,16 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         List<Long> skuIds = cartInfoList.stream()
                 .map(CartInfo::getSkuId)
                 .collect(Collectors.toList());
-        // 根据所有skuId获取参与的全部活动
+        // 根据所有参与活动的skuId的全部活动
         List<ActivitySku> activitySkuList = baseMapper.selectCartActivity(skuIds);
         // 根据活动进行分组，每个活动里面有哪些skuId信息（带活动的skuId）
         // map里面key是分组字段 活动id
         // value是每组里面sku列表数据，set集合
-        // todo 这里没看明白为什么要用set
+        // (activityId,[skuId])
+        // todo 感觉set list都可以，set更好一点，因为上一步放到这里的是单个skuId的，如果有问题那么就是表中数据出现重复
         Map<Long, Set<Long>> activityIdToSkuIdListMap = activitySkuList.stream()
                 .collect(Collectors.groupingBy(ActivitySku::getActivityId,
                         Collectors.mapping(ActivitySku::getSkuId, Collectors.toSet())));
-
         // 获取活动里面规则数据
         // key是活动id value是活动里面规则列表数据
         Map<Long, List<ActivityRule>> activityIdToActivityRuleListMap =
@@ -378,7 +368,6 @@ public class ActivityInfoServiceImpl extends ServiceImpl<ActivityInfoMapper, Act
         Set<Long> activityIdList = activitySkuList.stream()
                 .map(ActivitySku::getActivityId)
                 .collect(Collectors.toSet());
-
         // 我的方法：使用for循环，然后查出每个活动id对应的规则列表，然后放入map中
         // 优点：简洁，稍易理解
         // 缺点：多次调用sql

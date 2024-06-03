@@ -97,7 +97,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         LeaderAddressVo leaderAddressVo = userFeignClient.getUserAddressByUserId(userId);
         // 获取购物车里面选中的商品
         List<CartInfo> cartInfoList = cartFeignClient.getCartCheckedList(userId);
-        // 唯一标识订单
+        // 唯一标识订单 （待确认订单）
         String orderNo = System.currentTimeMillis() + "";
         redisTemplate.opsForValue()
                 .set(RedisConst.ORDER_REPEAT + orderNo, orderNo, 24, TimeUnit.HOURS);
@@ -132,9 +132,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         String script = "if(redis.call('get', KEYS[1]) == ARGV[1]) then return redis.call('del', KEYS[1]) else return 0 end";
         // 3.如果redis有相同orderNo，表示正常提交订单，把redis的orderNo删除
         Boolean flag = (Boolean) redisTemplate.execute(new DefaultRedisScript(script, Boolean.class),
-                Arrays.asList(RedisConst.ORDER_REPEAT + orderNo), orderNo);
+                Collections.singletonList(RedisConst.ORDER_REPEAT + orderNo), orderNo);
         // 4.如果redis没有相同orderNo，表示重复提交了，不能再往后进行
-        if (!flag) {
+        if (Boolean.FALSE.equals(flag)) {
             throw new SsyxException(ResultCodeEnum.REPEAT_SUBMIT);
         }
         // 第三步 验证库存 并且 锁定库存
@@ -143,11 +143,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // ** 库存充足，库存锁定 2锁定（目前没有真正减库存）
         // 1.远程调用service-cart模块，获取当前用户购物车商品（选中的购物项）
         List<CartInfo> cartInfoList = cartFeignClient.getCartCheckedList(userId);
-
         // 2.购物车有很多商品，商品不同类型，重点处理普通类型商品
-        List<CartInfo> commonSkuList = cartInfoList.stream()
-                .filter(cartInfo -> cartInfo.getSkuType().equals(SkuType.COMMON.getCode()))
-                .collect(Collectors.toList());
+        List<CartInfo> commonSkuList = cartInfoList;
+        // todo 普通商品和秒杀商品的分情况处理
+//        List<CartInfo> commonSkuList = cartInfoList.stream()
+//                .filter(cartInfo -> cartInfo.getSkuType().equals(SkuType.COMMON.getCode()))
+//                .collect(Collectors.toList());
         // 3.把获取购物车里面普通类型商品List集合，转换List<SkuStockLockVo>
         if (!CollectionUtils.isEmpty(commonSkuList)) {
             List<SkuStockLockVo> commonStockLockVoList = commonSkuList.stream().map(item -> {
@@ -159,7 +160,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             // 4.远程调用service-product模块实现锁定商品
             //// 验证库存并锁定库存，保证具备原子性
             Boolean isLockSuccess = productFeignClient.checkAndLock(commonStockLockVoList, orderNo);
-            if (!isLockSuccess) { // 锁定失败
+            if (Boolean.FALSE.equals(isLockSuccess)) { // 锁定失败
+                // todo 锁定失败这里是否需要其他逻辑？恢复确认订单？
                 throw new SsyxException(ResultCodeEnum.ORDER_STOCK_FALL);
             }
         }
@@ -340,90 +342,21 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // 封装订单项数据
         List<OrderItem> orderItemList = new ArrayList<>();
         for (CartInfo cartInfo : cartInfoList) {
-            OrderItem orderItem = new OrderItem();
-
-            orderItem.setId(null);
-            orderItem.setCategoryId(cartInfo.getCategoryId());
-            if (SkuType.COMMON.getCode().equals(cartInfo.getSkuType())) {
-                orderItem.setSkuType(SkuType.COMMON);
-            } else {
-                orderItem.setSkuType(SkuType.SECKILL);
-            }
-            orderItem.setSkuId(cartInfo.getSkuId());
-            orderItem.setSkuName(cartInfo.getSkuName());
-            orderItem.setSkuPrice(cartInfo.getCartPrice());
-            orderItem.setImgUrl(cartInfo.getImgUrl());
-            orderItem.setSkuNum(cartInfo.getSkuNum());
-            orderItem.setLeaderId(orderParamVo.getLeaderId());
-            // 营销活动金额
-            BigDecimal activityAmount = activitySplitAmount.get("activity:" + orderItem.getSkuId());
-            if (Objects.isNull(activityAmount)) {
-                activityAmount = new BigDecimal(0);
-            }
-            orderItem.setSplitActivityAmount(activityAmount);
-            // 优惠卷金额
-            BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:" + orderItem.getSkuId());
-            if (Objects.isNull(couponAmount)) {
-                couponAmount = new BigDecimal(0);
-            }
-            orderItem.setSplitCouponAmount(couponAmount);
-            // 总金额
-            BigDecimal skuTotalAmount = orderItem.getSkuPrice().multiply(new BigDecimal(orderItem.getSkuNum()));
-            // 优惠之后的金额
-            BigDecimal splitTotalAmount = skuTotalAmount.subtract(activityAmount).subtract(couponAmount);
-
-            orderItem.setSplitTotalAmount(splitTotalAmount);
-
-            orderItemList.add(orderItem);
+            orderItemList.add(this.createOrderItem(orderParamVo, cartInfo, activitySplitAmount, couponInfoSplitAmount));
         }
         // 封装订单OrderInfo数据
-        OrderInfo orderInfo = new OrderInfo();
-        orderInfo.setUserId(userId); // 用户id
-        orderInfo.setOrderNo(orderParamVo.getOrderNo()); // 订单号 唯一标识
-        orderInfo.setOrderStatus(OrderStatus.UNPAID); // 订单状态，生成成功未支付
-        orderInfo.setProcessStatus(ProcessStatus.UNPAID);
-        orderInfo.setLeaderId(orderParamVo.getLeaderId()); // 团长id
-        orderInfo.setLeaderName(leaderAddressVo.getLeaderName()); // 团长名称
-
-        orderInfo.setLeaderPhone(leaderAddressVo.getLeaderPhone());
-        orderInfo.setTakeName(leaderAddressVo.getTakeName());
-        orderInfo.setReceiverName(orderParamVo.getReceiverName());
-        orderInfo.setReceiverPhone(orderParamVo.getReceiverPhone());
-        orderInfo.setReceiverProvince(leaderAddressVo.getProvince());
-        orderInfo.setReceiverCity(leaderAddressVo.getCity());
-        orderInfo.setReceiverDistrict(leaderAddressVo.getDistrict());
-        orderInfo.setReceiverAddress(leaderAddressVo.getDetailAddress());
-        orderInfo.setWareId(cartInfoList.get(0).getWareId());
-
-        orderInfo.setCouponId(orderParamVo.getCouponId());
-
-        // 计算订单金额
-        BigDecimal originalTotalAmount = this.computeTotalAmount(cartInfoList);
-        BigDecimal activityAmount = activitySplitAmount.get("activity:total");
-        if (null == activityAmount) activityAmount = new BigDecimal(0);
-        BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:total");
-        if (null == couponAmount) couponAmount = new BigDecimal(0);
-        BigDecimal totalAmount = originalTotalAmount.subtract(activityAmount).subtract(couponAmount);
-        // 计算订单金额
-        orderInfo.setOriginalTotalAmount(originalTotalAmount);
-        orderInfo.setActivityAmount(activityAmount);
-        orderInfo.setCouponAmount(couponAmount);
-        orderInfo.setTotalAmount(totalAmount);
-        // 计算团长佣金
-        BigDecimal profitRate = new BigDecimal(0); // orderSetService.getProfitRate();
-        BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
-        orderInfo.setCommissionAmount(commissionAmount);
+        OrderInfo orderInfo = this.createOrderInfo(orderParamVo, cartInfoList, userId, leaderAddressVo, activitySplitAmount, couponInfoSplitAmount);
         // 添加数据到订单基本信息表
         // order_info order_item TODO order_log暂时没有添加
 //        baseMapper.insert(orderInfo);
         // 保存
-        for (OrderItem orderItem : orderItemList) {
-            orderItem.setOrderId(orderInfo.getId());
-        }
         orderInfoServiceProxy = (OrderInfoService) AopContext.currentProxy();
         // 缩小事务的粒度
         transactionTemplate.execute(status -> {
             orderInfoServiceProxy.save(orderInfo);
+            for (OrderItem orderItem : orderItemList) {
+                orderItem.setOrderId(orderInfo.getId());
+            }
             orderItemService.saveBatch(orderItemList);
             return Boolean.TRUE;
         });
@@ -443,6 +376,82 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 .set(orderTempSkuKey, orderParamVo.getUserId(), RedisConst.ORDER_TEMP_SKU_EXPIRE, TimeUnit.SECONDS);
         // 返回订单id
         return orderInfo.getId();
+    }
+
+    private OrderInfo createOrderInfo(OrderSubmitVo orderParamVo, List<CartInfo> cartInfoList, Long userId, LeaderAddressVo leaderAddressVo, Map<String, BigDecimal> activitySplitAmount, Map<String, BigDecimal> couponInfoSplitAmount) {
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setUserId(userId); // 用户id
+        orderInfo.setOrderNo(orderParamVo.getOrderNo()); // 订单号 唯一标识
+        orderInfo.setOrderStatus(OrderStatus.UNPAID); // 订单状态，生成成功未支付
+        orderInfo.setProcessStatus(ProcessStatus.UNPAID);
+        orderInfo.setLeaderId(orderParamVo.getLeaderId()); // 团长id
+        orderInfo.setLeaderName(leaderAddressVo.getLeaderName()); // 团长名称
+
+        orderInfo.setLeaderPhone(leaderAddressVo.getLeaderPhone());
+        orderInfo.setTakeName(leaderAddressVo.getTakeName());
+        orderInfo.setReceiverName(orderParamVo.getReceiverName());
+        orderInfo.setReceiverPhone(orderParamVo.getReceiverPhone());
+        orderInfo.setReceiverProvince(leaderAddressVo.getProvince());
+        orderInfo.setReceiverCity(leaderAddressVo.getCity());
+        orderInfo.setReceiverDistrict(leaderAddressVo.getDistrict());
+        orderInfo.setReceiverAddress(leaderAddressVo.getDetailAddress());
+        orderInfo.setWareId(cartInfoList.get(0).getWareId());
+
+        orderInfo.setCouponId(orderParamVo.getCouponId());
+        // 计算订单金额
+        BigDecimal originalTotalAmount = this.computeTotalAmount(cartInfoList);
+        BigDecimal activityAmount = activitySplitAmount.get("activity:total");
+        if (null == activityAmount) activityAmount = new BigDecimal(0);
+        BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:total");
+        if (null == couponAmount) couponAmount = new BigDecimal(0);
+        BigDecimal totalAmount = originalTotalAmount.subtract(activityAmount).subtract(couponAmount);
+        // 计算订单金额
+        orderInfo.setOriginalTotalAmount(originalTotalAmount);
+        orderInfo.setActivityAmount(activityAmount);
+        orderInfo.setCouponAmount(couponAmount);
+        orderInfo.setTotalAmount(totalAmount);
+        // 计算团长佣金
+        BigDecimal profitRate = new BigDecimal(0); // orderSetService.getProfitRate();
+        BigDecimal commissionAmount = orderInfo.getTotalAmount().multiply(profitRate);
+        orderInfo.setCommissionAmount(commissionAmount);
+        return orderInfo;
+    }
+
+    private OrderItem createOrderItem(OrderSubmitVo orderParamVo, CartInfo cartInfo, Map<String, BigDecimal> activitySplitAmount, Map<String, BigDecimal> couponInfoSplitAmount) {
+        OrderItem orderItem = new OrderItem();
+
+        orderItem.setId(null);
+        orderItem.setCategoryId(cartInfo.getCategoryId());
+        if (SkuType.COMMON.getCode().equals(cartInfo.getSkuType())) {
+            orderItem.setSkuType(SkuType.COMMON);
+        } else {
+            orderItem.setSkuType(SkuType.SECKILL);
+        }
+        orderItem.setSkuId(cartInfo.getSkuId());
+        orderItem.setSkuName(cartInfo.getSkuName());
+        orderItem.setSkuPrice(cartInfo.getCartPrice());
+        orderItem.setImgUrl(cartInfo.getImgUrl());
+        orderItem.setSkuNum(cartInfo.getSkuNum());
+        orderItem.setLeaderId(orderParamVo.getLeaderId());
+        // 营销活动金额
+        BigDecimal activityAmount = activitySplitAmount.get("activity:" + orderItem.getSkuId());
+        if (Objects.isNull(activityAmount)) {
+            activityAmount = new BigDecimal(0);
+        }
+        orderItem.setSplitActivityAmount(activityAmount);
+        // 优惠卷金额
+        BigDecimal couponAmount = couponInfoSplitAmount.get("coupon:" + orderItem.getSkuId());
+        if (Objects.isNull(couponAmount)) {
+            couponAmount = new BigDecimal(0);
+        }
+        orderItem.setSplitCouponAmount(couponAmount);
+        // 总金额
+        BigDecimal skuTotalAmount = orderItem.getSkuPrice().multiply(new BigDecimal(orderItem.getSkuNum()));
+        // 优惠之后的金额
+        BigDecimal splitTotalAmount = skuTotalAmount.subtract(activityAmount).subtract(couponAmount);
+
+        orderItem.setSplitTotalAmount(splitTotalAmount);
+        return orderItem;
     }
 
     @Override

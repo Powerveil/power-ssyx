@@ -357,12 +357,10 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
         if (Collections.isEmpty(skuStockLockVoList)) {
             throw new SsyxException(ResultCodeEnum.DATA_ERROR);
         }
-
         // 2.遍历skuStockLockVoList得到每个商品，验证库存并锁定库存，具备原子性
         for (SkuStockLockVo skuStockLockVo : skuStockLockVoList) {
             this.checkLock(skuStockLockVo);
         }
-
         // 3.只要有一个商品锁定失败，所有锁定成功的商品都解锁 TODO 以后有操作 休息sleep
         boolean flag = skuStockLockVoList.stream()
                 .anyMatch(skuStockLockVo -> !skuStockLockVo.getIsLock());
@@ -371,14 +369,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             skuStockLockVoList.stream().filter(SkuStockLockVo::getIsLock)
                     .forEach(skuStockLockVo -> baseMapper.unlockStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum()));
             // 返回失败状态
-            return false;
+            return Boolean.FALSE;
         }
-
         // 4.如果所有商品都锁定成功了，redis缓存相关数据，为了方便后面的解锁和减库存
-        redisTemplate.opsForValue()
-                .set(RedisConst.STOCK_INFO + orderNo, skuStockLockVoList);
-
-        return true;
+        redisTemplate.opsForValue().set(RedisConst.STOCK_INFO + orderNo, skuStockLockVoList);
+        return Boolean.TRUE;
     }
 
     // 解锁取消库存
@@ -417,7 +412,6 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
      * @param skuStockLockVo
      */
     private void checkLock(SkuStockLockVo skuStockLockVo) {
-
         // 获取锁
         // 公平锁
         // 是防止两台JVM机器都来加锁（普通加锁只会在当前JVM机器上生效）
@@ -425,7 +419,6 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
                 .getFairLock(RedisConst.SKUKEY_PREFIX + skuStockLockVo.getSkuId());
         // 加锁
         rLock.lock();
-
         try {
             // 验证库存
             SkuInfo skuInfo =
@@ -438,14 +431,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo>
             // 有满足条件商品
             // 锁定库存:update
             Integer rows = baseMapper.lockStock(skuStockLockVo.getSkuId(), skuStockLockVo.getSkuNum());
-
             if (rows == 1) {
                 // 锁定成功
                 skuStockLockVo.setIsLock(true);
             } else {
                 skuStockLockVo.setIsLock(false);
             }
-
         } finally {
             // 解锁
             rLock.unlock();

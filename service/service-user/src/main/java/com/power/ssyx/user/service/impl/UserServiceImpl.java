@@ -50,7 +50,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public Result loginWx(String code) {
         // 1.得到微信返回code临时票据值
-
         // 2.拿着code + 小程序id + 小程序密钥 请求微信接口服务
         //// 使用HttpClient工具请求
         // 小程序id
@@ -70,7 +69,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 wxOpenAppId,
                 wxOpenAppSecret,
                 code);
-
         // HttpClient发送get请求
         String result = null;
         try {
@@ -78,16 +76,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         } catch (Exception e) {
             throw new SsyxException(ResultCodeEnum.FETCH_ACCESSTOKEN_FAILD);
         }
-
         // 3.请求微信接口服务，返回两个值 session_key 和 openId
         //// openId是你的微信唯一标识
-
         // TODO 以后使用JsonPath
-
         JSONObject jsonObject = JSONObject.parseObject(result);
         String sessionKey = jsonObject.getString("session_key");
         String openId = jsonObject.getString("openid");
-
         // 4.添加微信用户信息到数据库里面
         //// 操作user表
         //// 判断是否是第一次使用微信授权登录：如何判断？openId
@@ -105,22 +99,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             //TODO 事务 this
             save(user);
         }
-
         // 5.根据userId查询提货点和团长信息
         //// 提货点 user表 user_delivery表
         //// 团长   leader表
         LeaderAddressVo leaderAddressVo = getLeaderAddressVoByUserId(user.getId());
-
         // 6.使用Jwt工具根据userId和userName生成token字符串
         String token = JwtHelper.createToken(user.getId(), user.getNickName());
-
         // 7.获取当前登录用户信息，放到Redis里面，设置有效时间
-        UserLoginVo userLoginVo = getUserLoginVo(user.getId());
-
+        UserLoginVo userLoginVo = this.getUserLoginVo(user.getId());
         // 8.需要数据封装到map返回
         String key = RedisConst.USER_LOGIN_KEY_PREFIX + user.getId();
         redisTemplate.opsForValue()
-                .set(key, userLoginVo, RedisConst.USERKEY_TIMEOUT, TimeUnit.DAYS);// TODO 时间太长，以后肯定要改
+                .set(key, userLoginVo, RedisConst.USERKEY_TIMEOUT, TimeUnit.HOURS);// TODO 时间太长，以后肯定要改
         HashMap<String, Object> map = new HashMap<>();
         map.put("user", user);
         map.put("token", token);

@@ -9,6 +9,7 @@ import com.power.ssyx.common.exception.SsyxException;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.common.result.ResultCodeEnum;
 import com.power.ssyx.common.utils.BeanCopyUtils;
+import com.power.ssyx.contants.SystemConstants;
 import com.power.ssyx.enums.SkuType;
 import com.power.ssyx.model.order.CartInfo;
 import com.power.ssyx.model.product.SkuInfo;
@@ -51,7 +52,7 @@ public class CartInfoServiceImpl implements CartInfoService {
 
     private BoundHashOperations getCartBoundHashOperations() {
         Long userId = AuthContextHolder.getUserId();
-        String cartKey = getCartKey(userId);
+        String cartKey = this.getCartKey(userId);
         return redisTemplate.boundHashOps(cartKey);
     }
 
@@ -61,7 +62,7 @@ public class CartInfoServiceImpl implements CartInfoService {
         Long userId = AuthContextHolder.getUserId();
         // 1.因为购物车数据存储到redis里面
         //   从redis里面根据key获取数据，这个key包含userId
-        String cartKey = getCartKey(skuId);
+        String cartKey = this.getCartKey(skuId);
         //                    (key, (key, value))
         BoundHashOperations<String, String, CartInfo> hashOperations = getCartBoundHashOperations();
         // 2.根据第一步查询出来的结果，得到的是skuId + skuNum关系
@@ -91,7 +92,7 @@ public class CartInfoServiceImpl implements CartInfoService {
 
             // 更新其他值
             // todo 默认应该不选中
-            cartInfo.setIsChecked(1);// 默认选中结算 （结算前的小对钩）
+            cartInfo.setIsChecked(SystemConstants.IS_SELECTED);// 默认选中结算 （结算前的小对钩）
             cartInfo.setUpdateTime(new Date());
         } else {
             if (skuNum <= 0) {
@@ -227,7 +228,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     @Override
     public Result checkCart(Long skuId, Integer isChecked) {
         Long userId = AuthContextHolder.getUserId();
-        String cartKey = getCartKey(userId);
+        String cartKey = this.getCartKey(userId);
         // 获取field-value
         BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = getCartBoundHashOperations();
 
@@ -247,7 +248,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     @Override
     public Result checkAllCart(Integer isChecked) {
         Long userId = AuthContextHolder.getUserId();
-        String cartKey = getCartKey(userId);
+        String cartKey = this.getCartKey(userId);
         BoundHashOperations<String, String, CartInfo> boundHashOperations = getCartBoundHashOperations();
         List<CartInfo> cartInfoList = boundHashOperations.values();
         for (CartInfo cartInfo : cartInfoList) {
@@ -264,7 +265,7 @@ public class CartInfoServiceImpl implements CartInfoService {
     @Override
     public Result batchCheckCart(List<Long> skuIdList, Integer isChecked) {
         Long userId = AuthContextHolder.getUserId();
-        String cartKey = getCartKey(userId);
+        String cartKey = this.getCartKey(userId);
         // 获取field-value
         BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = getCartBoundHashOperations();
 
@@ -284,13 +285,13 @@ public class CartInfoServiceImpl implements CartInfoService {
     // 获取当前用户购物车选中购物项
     @Override
     public List<CartInfo> getCartCheckedList(Long userId) {
-        String cartKey = getCartKey(userId);
+        String cartKey = this.getCartKey(userId);
         // 获取field-value
         BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = redisTemplate.boundHashOps(cartKey);
 
         List<CartInfo> cartInfoList = cartBoundHashOperations.values();
         cartInfoList = cartInfoList.stream()
-                .filter(item -> item.getIsChecked().equals(1))
+                .filter(item -> SystemConstants.IS_SELECTED.equals(item.getIsChecked()))
                 .collect(Collectors.toList());
         return cartInfoList;
     }
@@ -298,26 +299,21 @@ public class CartInfoServiceImpl implements CartInfoService {
     // 根据userId删除选中购物车记录
     @Override
     public Boolean deleteCartChecked(Long userId) {
-
         List<CartInfo> cartInfoList = this.getCartCheckedList(userId);
-
-        String cartKey = getCartKey(userId);
-        // 获取field-value
+        // 获取购物车key
+        String cartKey = this.getCartKey(userId);
+        // 获取key [field-value,...]
         BoundHashOperations<String, String, CartInfo> cartBoundHashOperations = redisTemplate.boundHashOps(cartKey);
-
-
         // 获取skuIdList
         List<Long> skuIdList = cartInfoList.stream()
-                .filter(cartInfo -> cartInfo.getIsChecked().equals(1))
+                .filter(cartInfo -> SystemConstants.IS_SELECTED.equals(cartInfo.getIsChecked()))
                 .map(CartInfo::getSkuId)
                 .collect(Collectors.toList());
-
         // 遍历删除
         for (Long skuId : skuIdList) {
             cartBoundHashOperations.delete(skuId.toString());
         }
-
-        return true;
+        return Boolean.TRUE;
     }
 
 

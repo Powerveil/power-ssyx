@@ -36,14 +36,11 @@ public class WeixinServiceImpl implements WeixinService {
     // 调用微信支付系统生成预付单
     @Override
     public Map<String, String> createJsapi(String orderNo) {
-
         // 1.想payment_info支付记录表添加记录，目前支付状态，正在支付中
         PaymentInfo paymentInfo = paymentInfoService.getPaymentInfoByOrderNo(orderNo);
-
         if (Objects.isNull(paymentInfo)) {
             paymentInfo = paymentInfoService.savePaymentInfo(orderNo);
         }
-
         // 2.封装微信支付系统接口需要参数
         Map<String, String> paramMap = new HashMap<>();
         // 1.设置参数
@@ -69,10 +66,8 @@ public class WeixinServiceImpl implements WeixinService {
         } else {
             paramMap.put("openid", "oD7av4igt-00GI8PqsIlg5FROYnI"); // 只有管理员和商户才能完成支付操作
         }
-
         // 3.使用HttpClient调用微信支付系统接口
         HttpClient httpClient = new HttpClient("https://api.mch.weixin.qq.com/pay/unifiedorder");
-
         // 设置参数，xml格式
         try {
             String xmlData = WXPayUtil.generateSignedXml(paramMap, ConstantPropertiesUtils.PARTNERKEY);
@@ -91,7 +86,6 @@ public class WeixinServiceImpl implements WeixinService {
             resultMap.put("signType", "MD5");
             resultMap.put("timeStamp", String.valueOf(new Date().getTime()));
             String sign = WXPayUtil.generateSignature(resultMap, ConstantPropertiesUtils.PARTNERKEY);
-
             //返回结果
             Map<String, String> result = new HashMap();
             result.put("timeStamp", resultMap.get("timeStamp"));
@@ -99,7 +93,6 @@ public class WeixinServiceImpl implements WeixinService {
             result.put("signType", "MD5");
             result.put("paySign", sign);
             result.put("package", packages);
-
             // 6.返回结果
             return result;
         } catch (Exception e) {
