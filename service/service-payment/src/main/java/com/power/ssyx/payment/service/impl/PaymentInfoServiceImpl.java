@@ -78,15 +78,15 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
     public void paySuccess(String orderNo, Map<String, String> resultMap) {
         // 1.查询当前订单支付记录表状态是否是已经支付
         PaymentInfo paymentInfo =
-                getOne(new LambdaQueryWrapper<PaymentInfo>().eq(PaymentInfo::getOrderNo, orderNo));
-        if (paymentInfo.getPaymentStatus().equals(PaymentStatus.UNPAID)) {
+                this.getOne(new LambdaQueryWrapper<PaymentInfo>().eq(PaymentInfo::getOrderNo, orderNo));
+        if (paymentInfo.getPaymentStatus().equals(PaymentStatus.PAID)) {
             return;
         }
         // 2.如果支付记录表支付状态没有支付，更新
-        paymentInfo.setPaymentStatus(PaymentStatus.UNPAID);
+        paymentInfo.setPaymentStatus(PaymentStatus.PAID);
         paymentInfo.setTradeNo(resultMap.get("ransaction_id"));
         paymentInfo.setCallbackContent(resultMap.toString());
-        updateById(paymentInfo);
+        this.updateById(paymentInfo);
         // 3.整合RabbiMQ实现 修改订单记录已经支付，库存扣减
         rabbitService.sendMessage(MqConst.EXCHANGE_PAY_DIRECT, MqConst.ROUTING_PAY_SUCCESS, orderNo);
     }

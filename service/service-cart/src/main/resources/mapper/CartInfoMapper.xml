@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.power.ssyx.cart.mapper.CartInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.power.ssyx.model.order.CartInfo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="categoryId" column="category_id" jdbcType="BIGINT"/>
+        <result property="skuType" column="sku_type" jdbcType="TINYINT"/>
+        <result property="skuName" column="sku_name" jdbcType="VARCHAR"/>
+        <result property="skuId" column="sku_id" jdbcType="BIGINT"/>
+        <result property="cartPrice" column="cart_price" jdbcType="DECIMAL"/>
+        <result property="skuNum" column="sku_num" jdbcType="INTEGER"/>
+        <result property="perLimit" column="per_limit" jdbcType="INTEGER"/>
+        <result property="imgUrl" column="img_url" jdbcType="VARCHAR"/>
+        <result property="isChecked" column="is_checked" jdbcType="TINYINT"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="wareId" column="ware_id" jdbcType="BIGINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,user_id,category_id,
+        sku_type,sku_name,sku_id,
+        cart_price,sku_num,per_limit,
+        img_url,is_checked,status,
+        ware_id,create_time,update_time,
+        is_deleted
+    </sql>
+    <update id="deleteAllCartByUserId">
+        update cart_info
+        set is_deleted = 0
+        where user_id = #{userId}
+          and is_deleted = 1
+    </update>
+    <update id="updateCheckStatus">
+        update cart_info
+        set is_checked = #{isChecked}
+        where user_id = #{userId}
+          and sku_id = #{skuId}
+          and is_deleted = 1
+    </update>
+    <update id="updateChectStatusAll">
+        update cart_info
+        set is_checked = #{isChecked}
+        where user_id = #{userId}
+          and is_deleted = 1
+    </update>
+    <update id="updateChectStatusList">
+        update cart_info
+        set is_checked = #{isChecked}
+        where user_id = #{userId}
+        and is_deleted = 1
+        <if test="skuIdList != null and skuIdList.size > 0">
+            and sku_id in
+            <foreach collection="skuIdList" open="(" close=")" separator="," item="skuId">
+                skuId
+            </foreach>
+        </if>
+    </update>
+</mapper>

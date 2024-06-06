@@ -1,5 +1,6 @@
 package com.power.ssyx.cart.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.power.ssyx.common.result.Result;
 import com.power.ssyx.model.order.CartInfo;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * @author Powerveil
  * @Date 2023/10/8 15:14
  */
-public interface CartInfoService {
+public interface CartInfoService extends IService<CartInfo> {
     Result addToCart(Long skuId, Integer skuNum);
 
     Result deleteCart(Long skuId);
