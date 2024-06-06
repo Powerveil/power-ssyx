@@ -16,16 +16,11 @@ import java.util.List;
  */
 @Mapper
 public interface CartInfoMapper extends BaseMapper<CartInfo> {
+    // 清空购物车
     void deleteAllCartByUserId(@Param("userId") Long userId);
 
+    // 修改sku选中状态 (如果skuIdList为null则是更新全部)
     void updateCheckStatus(@Param("userId") Long userId,
-                           @Param("skuId") Long skuId,
-                           @Param("isChecked") Integer isChecked);
-
-    void updateChectStatusAll(@Param("userId") Long userId,
-                              @Param("isChecked") Integer isChecked);
-
-    void updateChectStatusList(@Param("userId") Long userId,
                                @Param("skuIdList") List<Long> skuIdList,
                                @Param("isChecked") Integer isChecked);
 }

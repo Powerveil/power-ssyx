@@ -42,19 +42,6 @@
         update cart_info
         set is_checked = #{isChecked}
         where user_id = #{userId}
-          and sku_id = #{skuId}
-          and is_deleted = 1
-    </update>
-    <update id="updateChectStatusAll">
-        update cart_info
-        set is_checked = #{isChecked}
-        where user_id = #{userId}
-          and is_deleted = 1
-    </update>
-    <update id="updateChectStatusList">
-        update cart_info
-        set is_checked = #{isChecked}
-        where user_id = #{userId}
         and is_deleted = 1
         <if test="skuIdList != null and skuIdList.size > 0">
             and sku_id in

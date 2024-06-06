@@ -266,7 +266,7 @@ public class CartInfoServiceImpl extends ServiceImpl<CartInfoMapper, CartInfo> i
         // 检查 cartInfo 对象是否为 null
         if (!Objects.isNull(cartInfo)) {
             // 更新数据库中的购物车商品勾选状态
-            cartInfoMapper.updateCheckStatus(userId, skuId, isChecked);
+            cartInfoMapper.updateCheckStatus(userId, Collections.singletonList(skuId), isChecked);
             // 更新内存中的购物车商品勾选状态
             cartInfo.setIsChecked(isChecked);
             // 将更新后的 cartInfo 对象存储到缓存中
@@ -298,7 +298,7 @@ public class CartInfoServiceImpl extends ServiceImpl<CartInfoMapper, CartInfo> i
             }
         }
         // 更新数据库中所有商品的勾选状态
-        cartInfoMapper.updateChectStatusAll(userId, isChecked);
+        cartInfoMapper.updateCheckStatus(userId, null, isChecked);
         // 设置缓存 key 的过期时间
         this.setCartKeyExpire(cartKey);
         // 返回操作结果
@@ -326,7 +326,7 @@ public class CartInfoServiceImpl extends ServiceImpl<CartInfoMapper, CartInfo> i
             }
         }
         // 更新数据库中指定用户的指定 SKU ID 列表的勾选状态
-        cartInfoMapper.updateChectStatusList(userId, skuIdList, isChecked);
+        cartInfoMapper.updateCheckStatus(userId, skuIdList, isChecked);
         // 设置缓存 key 的过期时间
         this.setCartKeyExpire(cartKey);
         // 返回操作结果
