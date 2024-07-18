@@ -35,6 +35,9 @@ public enum OrderStatus {
     }
 
     public static OrderStatus of(Integer code) {
+        if (!orderStatusMap.containsKey(code)) {
+            return null;
+        }
         return orderStatusMap.get(code);
     }
 }

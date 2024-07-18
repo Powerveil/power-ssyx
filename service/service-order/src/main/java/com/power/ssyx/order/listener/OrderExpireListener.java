@@ -13,6 +13,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @ClassName RedisKeyExpireListener
@@ -54,6 +55,10 @@ public class OrderExpireListener extends KeyExpirationEventMessageListener {
                 log.info("正在处理超时订单,订单号为:{}", orderNo);
                 // 1.2更新订单状态
                 OrderStatus orderStatus = OrderStatus.of(orderInfoMapper.queryStatusByOrderNo(orderNo));
+                if (Objects.isNull(orderStatus)) {
+                    log.error("超时订单处理：订单状态异常，请检查！,订单号为:{}", orderNo);
+                    return;
+                }
                 switch (orderStatus) {
                     case UNPAID:
                         orderInfoMapper.updateStatusByOrderNo(orderNo, OrderStatus.CANCEL.getCode());
